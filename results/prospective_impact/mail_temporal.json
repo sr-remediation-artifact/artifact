@@ -1,0 +1,28 @@
+{
+  "domain": "mail",
+  "split": "temporal",
+  "objective": "l1",
+  "n": 1469,
+  "n_orgs": 507,
+  "mean_gain": 5.0407270846599435,
+  "share_small": 0.2756977535738598,
+  "results": {
+    "prospective_model": {
+      "mean": 2.3887035406305173,
+      "sd": 0.0
+    },
+    "predict_zero": {
+      "mean": 4.1861352741393665,
+      "sd": 0.0
+    },
+    "action_mean": {
+      "mean": 5.380784152645884,
+      "sd": 0.0
+    },
+    "predict_mean": {
+      "mean": 5.427678504883985,
+      "sd": 0.0
+    }
+  },
+  "beats_all_references": true
+}

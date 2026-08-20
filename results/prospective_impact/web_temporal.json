@@ -1,0 +1,28 @@
+{
+  "domain": "web",
+  "split": "temporal",
+  "objective": "l1",
+  "n": 96207,
+  "n_orgs": 1382,
+  "mean_gain": 0.3399714201628176,
+  "share_small": 0.7619611878553536,
+  "results": {
+    "prospective_model": {
+      "mean": 0.3963692050308731,
+      "sd": 0.0
+    },
+    "predict_zero": {
+      "mean": 0.5920323244205175,
+      "sd": 0.0
+    },
+    "action_mean": {
+      "mean": 0.873871322500916,
+      "sd": 0.0
+    },
+    "predict_mean": {
+      "mean": 0.751309104893883,
+      "sd": 0.0
+    }
+  },
+  "beats_all_references": true
+}

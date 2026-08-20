@@ -1,0 +1,84 @@
+{
+ "what": "The rule-based counterfactual against realized outcomes, aggregated per action family. Supports Table 9 and Section 6.1. Aggregated from per-record predictions, which are not released because they carry organization identifiers.",
+ "population": "Records from the fixed Web test split in which exactly one action family was reduced and every other family was unchanged",
+ "source_split": "test split containing 23,098 Web snapshots",
+ "n_records": 1598,
+ "n_action_families": 8,
+ "per_action": {
+  "http-to-https": {
+   "n": 65,
+   "n_organizations": 14,
+   "realized_gain_mean": 2.6995447684779217,
+   "rules_gain_mean": 3.2812800041051764,
+   "rules_mae": 2.151771445855772,
+   "rules_within_1pt": 0.06153846153846154
+  },
+  "hsts": {
+   "n": 50,
+   "n_organizations": 23,
+   "realized_gain_mean": 0.993399169035425,
+   "rules_gain_mean": 3.0282753466753696,
+   "rules_mae": 2.7057852685490342,
+   "rules_within_1pt": 0.1
+  },
+  "referrer-policy": {
+   "n": 36,
+   "n_organizations": 19,
+   "realized_gain_mean": -0.17178366482717503,
+   "rules_gain_mean": 2.3296129016541123,
+   "rules_mae": 2.5013965664812874,
+   "rules_within_1pt": 0.027777777777777776
+  },
+  "csp-baseline": {
+   "n": 522,
+   "n_organizations": 37,
+   "realized_gain_mean": 0.002921586874149251,
+   "rules_gain_mean": 1.6472563706358703,
+   "rules_mae": 1.6443347837617253,
+   "rules_within_1pt": 0.11877394636015326
+  },
+  "xfo-xcto": {
+   "n": 92,
+   "n_organizations": 23,
+   "realized_gain_mean": 1.5580867240422422,
+   "rules_gain_mean": 4.448387083619442,
+   "rules_mae": 3.053343837838077,
+   "rules_within_1pt": 0.1956521739130435
+  },
+  "certificate-rotation": {
+   "n": 87,
+   "n_organizations": 38,
+   "realized_gain_mean": 2.269293051771936,
+   "rules_gain_mean": 7.138610759999753,
+   "rules_mae": 4.8693177082278165,
+   "rules_within_1pt": 0.11494252873563218
+  },
+  "weak-ciphers": {
+   "n": 24,
+   "n_organizations": 9,
+   "realized_gain_mean": -0.008142356324607183,
+   "rules_gain_mean": 2.280050600207215,
+   "rules_mae": 2.288192956531822,
+   "rules_within_1pt": 0.0
+  },
+  "ssl-vulns": {
+   "n": 722,
+   "n_organizations": 74,
+   "realized_gain_mean": 0.07814492786394668,
+   "rules_gain_mean": 0.32811347737947666,
+   "rules_mae": 0.25740587202381066,
+   "rules_within_1pt": 0.9085872576177285
+  }
+ },
+ "all_actions": {
+  "n": 1598,
+  "realized_gain_mean": 0.3864073343550609,
+  "rules_gain_mean": 1.6460330102740925,
+  "rules_mae": 1.3572273999874231,
+  "predict_zero_mae": 0.40866114474714604,
+  "rules_within_1pt": 0.47309136420525655,
+  "predict_zero_within_1pt": 0.909261576971214,
+  "rules_mae_over_predict_zero_mae": 3.3211559685401206,
+  "note": "Neither the rule-based counterfactual nor predicting no change contains a learned component, so both are evaluated on all 1,598 records. The ratio 3.3 reported in Section 6.1 and the conclusion is rules_mae / predict_zero_mae."
+ }
+}

@@ -1,0 +1,43 @@
+{
+  "domain": "web",
+  "split": "temporal_orgs",
+  "objective": "l1",
+  "n": 96207,
+  "n_orgs": 1382,
+  "mean_gain": 0.3399714201628176,
+  "share_small": 0.7619611878553536,
+  "results": {
+    "prospective_model": {
+      "mean": 0.5082634682583642,
+      "sd": 0.0
+    },
+    "predict_zero": {
+      "mean": 0.6748641853598394,
+      "sd": 0.0
+    },
+    "action_mean": {
+      "mean": 0.934288264219587,
+      "sd": 0.0
+    },
+    "predict_mean": {
+      "mean": 0.8263709267719995,
+      "sd": 0.0
+    }
+  },
+  "reliability_auc": 0.8196636927871261,
+  "selective_acceptance": {
+    "0.05": {
+      "coverage": 0.5253987212815289,
+      "empirical": 0.031960417223856646
+    },
+    "0.1": {
+      "coverage": 0.9001615962903112,
+      "empirical": 0.06298782391507961
+    },
+    "0.2": {
+      "coverage": 1.0,
+      "empirical": 0.10595095903885336
+    }
+  },
+  "beats_all_references": true
+}

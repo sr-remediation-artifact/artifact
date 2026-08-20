@@ -1,0 +1,204 @@
+{
+  "what": "The rule-based counterfactual against realized outcomes on records where several action types moved together, projected over the whole batch. Aggregated from per-record projections, which are not released because they carry organization identifiers.",
+  "population": "Records from the fixed Web test split in which two or more action types were reduced together and every other action type was unchanged. Same split, thresholds and score source as the single-action-type population reported in per_action_counterfactual.json.",
+  "source_split": "test split containing 23,098 Web snapshots",
+  "method": "Every action type in the batch is applied to the pre-remediation snapshot with persistent state mutation and iterated to a fixed point, so the projection describes the state in which all of the work is complete and does not depend on the order of application. http-to-https is applied once the rest has settled, because it rewrites the asset as HTTPS and cannot fire twice.",
+  "overall": {
+    "n_records": 2723,
+    "n_companies": 100,
+    "realized_gain_mean": 1.16443113769507,
+    "bundle_mean": 10.901433677554847,
+    "bundle_mae": 9.74104327580418,
+    "bundle_bias": 9.737002539859777,
+    "bundle_within_1pt": 0.037091443261109074,
+    "zero_mae": 1.3424444517708463,
+    "zero_within_1pt": 0.663973558575101,
+    "model_mae": 0.36565233247627393,
+    "model_within_1pt": 0.9199412412780023,
+    "sum_of_parts_mean": 10.792217953153898,
+    "sum_of_parts_mae": 9.638048390321964,
+    "interaction_mean": -0.1092157244009472,
+    "interaction_abs_mean": 0.5073473258028721,
+    "interaction_share_nonzero": 0.4638266617701065,
+    "interaction_share_superadditive": 0.19059860448035254,
+    "interaction_share_subadditive": 0.27322805728975397,
+    "passes_share_above_one": 0.23283143591626881
+  },
+  "order_sensitivity": {
+    "records_checked": 273,
+    "max_abs_difference": 0.0,
+    "share_differing": 0.0,
+    "note": "Each checked record was reprojected with the bundle reversed; the fixed point is identical."
+  },
+  "by_bundle_size": [
+    {
+      "bundle_size": 2,
+      "n_records": 622,
+      "n_organizations": 96,
+      "realized_gain_mean": 0.829330114595361,
+      "rules_gain_mean": 4.7070854628726115,
+      "rules_mae": 3.894641078143183,
+      "rules_bias": 3.877755348277251,
+      "zero_mae": 0.8973240951540251,
+      "estimator_mae": 0.2568072939164314
+    },
+    {
+      "bundle_size": 3,
+      "n_records": 378,
+      "n_organizations": 79,
+      "realized_gain_mean": 0.5964648024151646,
+      "rules_gain_mean": 7.871190496837746,
+      "rules_mae": 7.276048445745333,
+      "rules_bias": 7.274725694422583,
+      "zero_mae": 0.9982046138471776,
+      "estimator_mae": 0.5165873942343657
+    },
+    {
+      "bundle_size": "4+",
+      "n_records": 1723,
+      "n_organizations": 95,
+      "realized_gain_mean": 1.41000520101708,
+      "rules_gain_mean": 13.802371873633438,
+      "rules_mae": 12.392366672616356,
+      "rules_bias": 12.392366672616356,
+      "zero_mae": 1.5786531114056743,
+      "estimator_mae": 0.3718323444551847
+    }
+  ],
+  "most_common_bundles": [
+    {
+      "bundle": "csp-baseline,hsts,referrer-policy,xfo-xcto",
+      "n": 449,
+      "n_organizations": 70,
+      "realized_gain_mean": 0.0772003326397843,
+      "rules_gain_mean": 9.908767120180194,
+      "rules_mae": 9.831566787540408,
+      "zero_mae": 0.5883516355336158
+    },
+    {
+      "bundle": "csp-baseline,hsts,referrer-policy,ssl-vulns,weak-ciphers,xfo-xcto",
+      "n": 176,
+      "n_organizations": 41,
+      "realized_gain_mean": 0.7149957101860797,
+      "rules_gain_mean": 9.761385556816364,
+      "rules_mae": 9.046389846630284,
+      "zero_mae": 0.7886734341249205
+    },
+    {
+      "bundle": "csp-baseline,xfo-xcto",
+      "n": 141,
+      "n_organizations": 78,
+      "realized_gain_mean": 0.0114382614937606,
+      "rules_gain_mean": 5.000102113614161,
+      "rules_mae": 4.988663852120401,
+      "zero_mae": 0.0688104769708458
+    },
+    {
+      "bundle": "csp-baseline,hsts,http-to-https,referrer-policy,xfo-xcto",
+      "n": 137,
+      "n_organizations": 36,
+      "realized_gain_mean": 1.5065858960866836,
+      "rules_gain_mean": 16.095270163861116,
+      "rules_mae": 14.588684267774434,
+      "zero_mae": 1.5255710447115522
+    },
+    {
+      "bundle": "certificate-rotation,csp-baseline,hsts,referrer-policy,ssl-vulns,weak-ciphers,xfo-xcto",
+      "n": 109,
+      "n_organizations": 42,
+      "realized_gain_mean": 3.4200969710042344,
+      "rules_gain_mean": 17.883282352797245,
+      "rules_mae": 14.463185381793007,
+      "zero_mae": 3.4200969710042344
+    },
+    {
+      "bundle": "ssl-vulns,weak-ciphers",
+      "n": 108,
+      "n_organizations": 30,
+      "realized_gain_mean": 2.417529248298657,
+      "rules_gain_mean": 3.3193983787430508,
+      "rules_mae": 0.949091352666632,
+      "zero_mae": 2.435027438550312
+    },
+    {
+      "bundle": "csp-baseline,referrer-policy,xfo-xcto",
+      "n": 102,
+      "n_organizations": 40,
+      "realized_gain_mean": -0.610092092645142,
+      "rules_gain_mean": 8.044492887612979,
+      "rules_mae": 8.654584980258123,
+      "zero_mae": 0.7877434520918212
+    },
+    {
+      "bundle": "certificate-rotation,csp-baseline,hsts,http-to-https,referrer-policy,ssl-vulns,tls-legacy,weak-ciphers,xfo-xcto",
+      "n": 95,
+      "n_organizations": 28,
+      "realized_gain_mean": 4.272371971974453,
+      "rules_gain_mean": 24.192490035456636,
+      "rules_mae": 19.92011806348218,
+      "zero_mae": 4.273257409372788
+    },
+    {
+      "bundle": "csp-baseline,hsts,referrer-policy,ssl-vulns,xfo-xcto",
+      "n": 83,
+      "n_organizations": 34,
+      "realized_gain_mean": 0.8277802770916054,
+      "rules_gain_mean": 10.49301591528471,
+      "rules_mae": 9.665235638193105,
+      "zero_mae": 0.9582940236194306
+    },
+    {
+      "bundle": "hsts,referrer-policy",
+      "n": 74,
+      "n_organizations": 18,
+      "realized_gain_mean": 0.6599541388607775,
+      "rules_gain_mean": 6.136961865142797,
+      "rules_mae": 5.477007726282019,
+      "zero_mae": 0.6666963061292603
+    }
+  ],
+  "organization_clustered_bootstrap": {
+    "resamples": 2000,
+    "unit": "organization",
+    "n_organizations": 100,
+    "bias_mean": 9.712641345757959,
+    "bias_ci95": [
+      8.713819642197501,
+      10.719931684486129
+    ],
+    "mae_ratio_rules_over_zero_mean": 7.334499275342135,
+    "mae_ratio_ci95": [
+      5.597382094075215,
+      9.196570655145264
+    ],
+    "share_of_organizations_with_positive_bias": 0.98,
+    "per_organization_bias_median": 9.151241416855765,
+    "per_organization_bias_min": -1.2434497875801753e-14,
+    "largest_organization_share_of_records": 0.040396621373485125,
+    "median_records_per_organization": 20.0,
+    "note": "Records are clustered by organization, so the interval resamples whole organizations rather than records."
+  },
+  "asset_loss_robustness": {
+    "share_with_net_asset_loss": 0.034153507161219246,
+    "n_after_removal": 2630,
+    "bias_after_removal": 9.690728980762081,
+    "rules_mae_after_removal": 9.694912602045964,
+    "zero_mae_after_removal": 1.3362621119304974,
+    "note": "Mirrors the asset-loss check of Section 6.4, which finds 2.4 percent over all Web events. Removing these records leaves the bias unchanged."
+  },
+  "both_populations": {
+    "single_action_type": {
+      "n_records": 1598,
+      "rules_mae": 1.357,
+      "rules_bias": 1.26,
+      "zero_mae": 0.409
+    },
+    "several_action_types": {
+      "n_records": 2723,
+      "rules_mae": 9.74104327580418,
+      "rules_bias": 9.737002539859777,
+      "zero_mae": 1.3424444517708463
+    },
+    "note": "The projection assumes complete remediation of every action type it covers, so its overshoot grows with the number of action types in the batch. See by_bundle_size."
+  }
+}

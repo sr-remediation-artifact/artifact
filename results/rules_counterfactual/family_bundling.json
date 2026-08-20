@@ -1,0 +1,24 @@
+{
+  "what": "How many action families are reduced together in one record. Supports the shares reported in Section 5.1, the ranking population, and the counterfactual population definitions.",
+  "event_threshold_delta": 1.0,
+  "domains": {
+    "web": {
+      "n_families": 9,
+      "n_events": 96207,
+      "share_exactly_one_family": 0.3797228891868575,
+      "share_three_or_more_families": 0.44823141767231073
+    },
+    "mail": {
+      "n_families": 2,
+      "n_events": 1469,
+      "share_exactly_one_family": 0.8093941456773315,
+      "share_three_or_more_families": 0.0
+    },
+    "vulnerability": {
+      "n_families": 4,
+      "n_events": 18912,
+      "share_exactly_one_family": 0.4275592216582064,
+      "share_three_or_more_families": 0.3531091370558376
+    }
+  }
+}

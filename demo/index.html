@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What Remediation Actually Buys</title>
+<meta name="description" content="Make a security-remediation funding decision on held-out records, then see what the scoring rules promised and what the organization actually collected.">
+<style>
+/* ============================================================
+   Identity carried over from the first version: cool paper and
+   machined brass. The subject is a measuring instrument for a
+   decision made blind, so the page borrows from metrology.
+
+   Semantic roles, fixed here and used nowhere else:
+     brass = the accent. Primary action and current selection only.
+     clay  = what the scoring rules promised.
+     teal  = what the organization actually collected.
+   Colour never carries the promised/realized contrast alone;
+   position and the printed value carry it too.
+   ============================================================ */
+:root{
+  --ground:#F2F3F0; --panel:#FBFBF9; --sunk:#EDEEEA; --line:#DCDED7;
+  --rule:#C9CCC3;
+  --ink:#161C22; --muted:#5A656D; --faint:#6B747C;
+  --brass:#8A6620; --brass-bg:#F3EDE0; --on-brass:#FBFBF9;
+  --teal:#175A55; --teal-bg:#E4EDEB;
+  --clay:#973A22; --clay-bg:#F6E7E1;
+  --focus:#8A6620;
+  --shadow:0 1px 2px rgba(20,28,34,.05), 0 12px 34px -26px rgba(20,28,34,.45);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --step:150ms cubic-bezier(.22,1,.36,1);
+  --z-sticky:10;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0D1218; --panel:#141A21; --sunk:#10161D; --line:#242E37;
+  --rule:#33404B;
+  --ink:#E9ECE8; --muted:#9BA6AF; --faint:#7C868E;
+  --brass:#CFA45C; --brass-bg:#241D10; --on-brass:#0D1218;
+  --teal:#5CB3AA; --teal-bg:#10211F;
+  --clay:#D97B5C; --clay-bg:#24140F;
+  --focus:#CFA45C;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 14px 34px -24px rgba(0,0,0,.95);
+}}
+:root[data-theme="dark"]{
+  --ground:#0D1218; --panel:#141A21; --sunk:#10161D; --line:#242E37;
+  --rule:#33404B;
+  --ink:#E9ECE8; --muted:#9BA6AF; --faint:#7C868E;
+  --brass:#CFA45C; --brass-bg:#241D10; --on-brass:#0D1218;
+  --teal:#5CB3AA; --teal-bg:#10211F;
+  --clay:#D97B5C; --clay-bg:#24140F;
+  --focus:#CFA45C;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 14px 34px -24px rgba(0,0,0,.95);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0; font-family:var(--serif); font-weight:600; letter-spacing:-.015em; text-wrap:balance}
+p{margin:0; text-wrap:pretty}
+button{font:inherit; color:inherit; margin:0}
+:where(a){color:var(--brass); text-underline-offset:.18em}
+
+:where(button,a,summary,[tabindex]):focus-visible{
+  outline:2px solid var(--focus); outline-offset:2px; border-radius:3px;
+}
+
+.wrap{max-width:960px; margin:0 auto; padding:0 24px}
+.num{font-family:var(--mono); font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+/* File paths are long and unbreakable, and they are the whole point of citing a source.
+   Let them wrap rather than push the page sideways. */
+code{font-family:var(--mono); font-size:.9em; overflow-wrap:anywhere}
+/* Wide content scrolls inside its own box. The page body never scrolls sideways. */
+.scroll-x{overflow-x:auto; -webkit-overflow-scrolling:touch}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ---------- header ---------- */
+.top{padding:34px 0 0}
+.top-row{display:flex; align-items:flex-start; justify-content:space-between; gap:20px}
+h1{font-size:34px; line-height:1.1}
+.standfirst{margin-top:12px; max-width:62ch; color:var(--muted); font-size:16.5px}
+.standfirst strong{color:var(--ink); font-weight:600}
+.theme{
+  flex:none; background:var(--panel); border:1px solid var(--line); color:var(--muted);
+  border-radius:7px; padding:7px 11px; font-size:13px; cursor:pointer;
+  transition:color var(--step), border-color var(--step);
+}
+.theme:hover{color:var(--ink); border-color:var(--rule)}
+
+/* ---------- the decision ---------- */
+.decide{margin:30px 0 0; background:var(--panel); border:1px solid var(--line);
+        border-radius:14px; box-shadow:var(--shadow); overflow:hidden}
+.decide-head{
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  padding:18px 22px; background:var(--sunk); border-bottom:1px solid var(--line);
+}
+.org{font-family:var(--mono); font-size:17px; font-weight:600; letter-spacing:.01em}
+.org-score{color:var(--muted); font-size:14px}
+.org-score b{color:var(--ink); font-family:var(--mono); font-weight:600}
+.badge{
+  font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--teal); background:var(--teal-bg); border:1px solid currentColor;
+  border-radius:100px; padding:3px 9px; font-weight:600;
+}
+.spacer{margin-left:auto}
+.ghost{
+  background:none; border:1px solid var(--line); color:var(--muted);
+  border-radius:7px; padding:7px 13px; font-size:13.5px; cursor:pointer;
+  transition:color var(--step), border-color var(--step), background-color var(--step);
+}
+.ghost:hover{color:var(--ink); border-color:var(--rule); background:var(--panel)}
+
+.prompt{padding:22px 22px 6px; font-size:17px}
+.prompt .hint{display:block; margin-top:5px; color:var(--muted); font-size:14.5px}
+
+.opts{list-style:none; margin:0; padding:14px 14px 4px; display:grid; gap:8px}
+.opt{
+  width:100%; display:grid; align-items:center; gap:4px 16px; text-align:left;
+  grid-template-columns:1fr auto;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; cursor:pointer;
+  transition:border-color var(--step), background-color var(--step), transform var(--step);
+}
+.opt:hover:not(:disabled){border-color:var(--rule); background:var(--sunk)}
+.opt:active:not(:disabled){transform:translateY(1px)}
+.opt[aria-checked="true"]{border-color:var(--brass); background:var(--brass-bg)}
+.opt:disabled{cursor:default}
+.opt-name{font-size:16px; font-weight:500}
+.opt-open{font-size:13.5px; color:var(--muted); white-space:nowrap}
+.opt-open b{color:var(--ink); font-weight:600}
+
+/* revealed numbers inside an option */
+.opt-figs{
+  grid-column:1/-1; display:grid; gap:2px 18px; margin-top:10px; padding-top:11px;
+  border-top:1px dashed var(--line);
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  animation:rise 260ms cubic-bezier(.22,1,.36,1) both;
+}
+.fig{display:flex; flex-direction:column; gap:1px; min-width:0}
+.fig-k{font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted)}
+.fig-v{font-size:19px; font-weight:600}
+.fig-rules .fig-v{color:var(--clay)}
+.fig-ours .fig-v{color:var(--ink)}
+.fig-got  .fig-v{color:var(--teal)}
+@keyframes rise{from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:none}}
+
+.act{display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:16px 22px 22px}
+.primary{
+  background:var(--brass); border:1px solid var(--brass); color:var(--on-brass);
+  border-radius:8px; padding:11px 20px; font-size:15px; font-weight:600; cursor:pointer;
+  transition:opacity var(--step), transform var(--step),
+             background-color var(--step), color var(--step), border-color var(--step);
+}
+.primary:hover:not(:disabled){opacity:.88}
+.primary:active:not(:disabled){transform:translateY(1px)}
+/* Disabled is an outline, not a faded fill. A washed-out brass block reads as broken. */
+.primary:disabled{background:transparent; border-color:var(--line); color:var(--faint); cursor:not-allowed}
+.act-note{font-size:14px; color:var(--muted)}
+
+/* the verdict */
+.verdict{
+  margin:0 14px 18px; padding:18px 20px; background:var(--sunk);
+  border:1px solid var(--line); border-radius:10px;
+  animation:rise 300ms cubic-bezier(.22,1,.36,1) both;
+}
+.verdict p{font-size:16px; max-width:64ch}
+.verdict p + p{margin-top:9px}
+.verdict .lede{font-family:var(--serif); font-size:20px; line-height:1.35; letter-spacing:-.01em}
+.verdict .num{font-weight:600}
+.v-rules{color:var(--clay)} .v-got{color:var(--teal)} .v-ours{color:var(--brass)}
+
+/* ---------- the finding, always visible ---------- */
+.finding{
+  margin:26px 0 0; padding:22px 24px; border:1px solid var(--line);
+  border-left-width:1px; border-radius:12px; background:var(--panel);
+}
+.finding p{font-family:var(--serif); font-size:20px; line-height:1.4; max-width:60ch}
+.finding .src{margin-top:11px; font-size:13px; color:var(--muted); font-family:var(--sans)}
+
+/* ---------- panels ---------- */
+.panels{margin:26px 0 0; display:grid; gap:10px}
+details.panel{border:1px solid var(--line); border-radius:12px; background:var(--panel); overflow:hidden}
+details.panel > summary{
+  list-style:none; cursor:pointer; padding:17px 22px;
+  display:flex; align-items:center; gap:14px;
+  transition:background-color var(--step);
+}
+details.panel > summary::-webkit-details-marker{display:none}
+details.panel > summary:hover{background:var(--sunk)}
+.panel-title{font-family:var(--serif); font-size:18px; font-weight:600}
+.panel-sub{font-size:13.5px; color:var(--muted); margin-left:auto; text-align:right}
+.chev{flex:none; width:9px; height:9px; border-right:1.5px solid var(--muted);
+      border-bottom:1.5px solid var(--muted); transform:rotate(45deg); margin-right:2px;
+      transition:transform var(--step)}
+details.panel[open] > summary .chev{transform:rotate(-135deg)}
+.panel-body{padding:4px 22px 24px; border-top:1px solid var(--line);
+            animation:rise 240ms cubic-bezier(.22,1,.36,1) both}
+.panel-body > * + *{margin-top:16px}
+.panel-body p{max-width:70ch; color:var(--ink)}
+.panel-body h3{font-size:16px; margin-top:26px}
+.panel-body .note{color:var(--muted); font-size:14.5px}
+
+/* dumbbell chart */
+.chart{margin-top:6px}
+.ch-head{display:grid; grid-template-columns:minmax(140px,1.1fr) 1fr 62px 62px;
+         gap:12px; padding:0 0 8px; font-size:11.5px; letter-spacing:.05em;
+         text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line)}
+.ch-head .r{text-align:right}
+.ch-row{display:grid; grid-template-columns:minmax(140px,1.1fr) 1fr 62px 62px;
+        gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line)}
+.ch-name{font-size:14.5px}
+.ch-track{position:relative; height:14px}
+.ch-track::before{content:""; position:absolute; inset:auto 0 6px; height:1px; background:var(--line)}
+.ch-bar{position:absolute; top:6px; height:2px; background:var(--clay); opacity:.55}
+.ch-dot{position:absolute; top:2px; width:10px; height:10px; border-radius:50%; margin-left:-5px}
+.ch-dot.got{background:var(--teal)}
+.ch-dot.rules{background:var(--clay)}
+.ch-v{text-align:right; font-size:14px}
+.ch-v.rules{color:var(--clay)} .ch-v.got{color:var(--teal)}
+.ch-legend{margin-top:10px; font-size:13.5px; color:var(--muted); display:flex; gap:18px; flex-wrap:wrap}
+.key{display:inline-flex; align-items:center; gap:7px}
+.key i{width:9px; height:9px; border-radius:50%; display:inline-block}
+
+/* small tables */
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+caption{text-align:left; font-size:13.5px; color:var(--muted); padding-bottom:8px}
+th,td{text-align:right; padding:8px 10px; border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left; padding-left:0}
+th{font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); font-weight:600}
+td.win{color:var(--teal); font-weight:600}
+td.tie{color:var(--muted)}
+
+/* steps */
+ol.steps{margin:0; padding:0; list-style:none; counter-reset:s}
+ol.steps li{counter-increment:s; display:grid; grid-template-columns:26px 1fr; gap:14px;
+            padding:13px 0; border-bottom:1px solid var(--line)}
+ol.steps li::before{content:counter(s,decimal-leading-zero); font-family:var(--mono);
+                    font-size:12.5px; color:var(--brass); padding-top:3px}
+/* Both children sit in column 2. Without this the span starts an implicit row in the
+   26px counter column and breaks to one word per line. */
+ol.steps li > *{grid-column:2}
+ol.steps b{display:block; font-weight:600; font-size:15px}
+ol.steps span{display:block; color:var(--muted); font-size:14.5px; max-width:70ch}
+
+.kvs{display:grid; gap:0}
+.kv{display:flex; justify-content:space-between; gap:18px; padding:10px 0;
+    border-bottom:1px solid var(--line); font-size:14.5px}
+.kv span:first-child{color:var(--muted)}
+.kv code{font-family:var(--mono); font-size:13px}
+
+footer{margin:40px 0 56px; padding-top:20px; border-top:1px solid var(--line);
+       font-size:13.5px; color:var(--muted); display:flex; gap:16px; flex-wrap:wrap}
+
+@media (max-width:720px){
+  .wrap{padding:0 16px}
+  h1{font-size:27px}
+  .opt{grid-template-columns:1fr}
+  .opt-open{white-space:normal}
+  .opt-figs{grid-template-columns:1fr; gap:9px}
+  .fig{flex-direction:row; align-items:baseline; justify-content:space-between}
+  .ch-head,.ch-row{grid-template-columns:1fr 56px 56px; gap:8px}
+  .ch-head{font-size:10.5px; letter-spacing:.03em}
+  .ch-track{display:none}
+  /* Tighten rather than hide. Dropping a column would take a reference away from a
+     reviewer reading on a phone, and the five fit at this density. */
+  table{min-width:0; table-layout:fixed; width:100%}
+  th,td{padding:7px 3px; font-size:12.5px; overflow-wrap:anywhere}
+  th{font-size:10px; letter-spacing:.02em}
+  th:first-child,td:first-child{width:27%}
+  .panel-sub{display:none}
+  .decide-head{gap:10px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important;
+                       transition-duration:.01ms !important; scroll-behavior:auto !important}
+  .opt-figs,.verdict,.panel-body{animation:fade .01ms both}
+  @keyframes fade{from{opacity:1}to{opacity:1}}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="top-row">
+      <h1>What Remediation Actually Buys</h1>
+      <button class="theme" id="theme" type="button">Dark</button>
+    </div>
+    <p class="standfirst">
+      A security rating tells an organization its score. It never tells them what a repair is
+      worth. Below is one real decision, taken from records the models
+      <strong>never trained on</strong>. Make it, then see what the platform's own scoring
+      rules would have promised you.
+    </p>
+  </header>
+
+  <main>
+    <section class="decide" id="decide" aria-labelledby="prompt">
+      <div class="decide-head">
+        <span class="org" id="orgName">ORG-05</span>
+        <span class="org-score">score <b id="orgScore">72.0</b></span>
+        <span class="badge">held out</span>
+        <span class="spacer"></span>
+        <button class="ghost" id="another" type="button">Another organization</button>
+      </div>
+
+      <p class="prompt" id="prompt">
+        You have budget for one of these this quarter. Which do you fund?
+        <span class="hint" id="hint">Nothing here tells you what any of them is worth. That is the operator's problem.</span>
+      </p>
+
+      <ul class="opts" id="opts" role="radiogroup" aria-labelledby="prompt"></ul>
+
+      <div class="verdict" id="verdict" hidden></div>
+
+      <div class="act">
+        <button class="primary" id="reveal" type="button" disabled>Reveal what happened</button>
+        <span class="act-note" id="actNote">Pick one to continue.</span>
+      </div>
+      <p class="sr" role="status" aria-live="polite" id="live"></p>
+    </section>
+
+    <!-- Static, so the finding survives a JS failure. -->
+    <section class="finding">
+      <p>
+        Across 1,598 records, assuming a repair changes nothing at all is
+        <strong>3.3&times;</strong> more accurate than the platform's own scoring rules.
+      </p>
+      <p class="src">
+        Rules 1.357 mean absolute error against 0.409 for predicting no change.
+        Source: <code>artifact/results/rules_counterfactual/per_action_counterfactual.json</code>
+      </p>
+    </section>
+
+    <div class="panels">
+
+      <details class="panel" id="p-evidence">
+        <summary>
+          <span class="chev" aria-hidden="true"></span>
+          <span class="panel-title">Does it hold across all the data?</span>
+          <span class="panel-sub">every repair, three domains, over time</span>
+        </summary>
+        <div class="panel-body">
+          <p>
+            The rules projection assumes an organization fixes every asset a repair applies to.
+            It never happens. Below is what the rules promised against what organizations
+            collected, on all 1,598 Web records where exactly one repair took place.
+          </p>
+          <div class="chart" id="chart"></div>
+          <div class="ch-legend">
+            <span class="key"><i style="background:var(--clay)"></i> what the rules promised</span>
+            <span class="key"><i style="background:var(--teal)"></i> what organizations collected</span>
+          </div>
+
+          <!-- Static, like the headline, so the finding survives a JS failure. -->
+          <p id="bundle">
+            Organizations often run several repairs at once. On the 2,723 records where they did,
+            the rules promised <span class="num v-rules">+10.90</span> points against the
+            <span class="num v-got">+1.16</span> collected, and predicting no change is
+            <strong>7.3&times;</strong> more accurate. The overshoot tracks the size of the batch:
+            +3.9 points for two repairs, +7.3 for three, +12.4 for four or more.
+          </p>
+          <p class="src">
+            Source: <code>artifact/results/rules_counterfactual/bundle_counterfactual.json</code>
+          </p>
+
+          <h3>Our estimate against the references an operator already has</h3>
+          <div id="acc"></div>
+
+          <h3>Which repair to fund first</h3>
+          <p>
+            Being close to the truth and putting the repairs in the right order are two
+            different things. An operator with budget for one repair does not need the number
+            to be right, only the order.
+          </p>
+          <div id="rank"></div>
+
+          <h3>Where it does not win</h3>
+          <p id="concede" class="note"></p>
+        </div>
+      </details>
+
+      <details class="panel" id="p-method">
+        <summary>
+          <span class="chev" aria-hidden="true"></span>
+          <span class="panel-title">How is the estimate made?</span>
+          <span class="panel-sub">four steps, no query to the engine</span>
+        </summary>
+        <div class="panel-body">
+          <p>
+            Nothing below is specific to this vendor or to security. It needs a score observed
+            repeatedly over time, and a way to tell from two consecutive observations which
+            kind of work was done.
+          </p>
+          <ol class="steps">
+            <li><b>Pair consecutive observations</b><span>Sort each organization's records by date and pair each with the next. The difference between the two scores is what actually happened.</span></li>
+            <li><b>Group findings into repairs</b><span>Findings that a team would schedule together become one repair, weighted by severity. That weighted count is the work still waiting.</span></li>
+            <li><b>Call a repair done when its count falls</b><span>This is inferred from the trace rather than from a work order, and it is the main assumption. The checks in the panel above bound it.</span></li>
+            <li><b>Predict the change directly, from the earlier record only</b><span>Inputs are the configuration as it stood, the work waiting in each repair, and which repair is being funded. Nothing the work produced may enter.</span></li>
+          </ol>
+          <p class="note">
+            A second model, trained on the first one's errors on organizations it had never
+            seen, withholds estimates it judges unreliable rather than answering anyway.
+          </p>
+        </div>
+      </details>
+
+      <details class="panel" id="p-verify">
+        <summary>
+          <span class="chev" aria-hidden="true"></span>
+          <span class="panel-title">What can I check?</span>
+          <span class="panel-sub">protocol, populations, limits</span>
+        </summary>
+        <div class="panel-body">
+          <div class="kvs" id="verify"></div>
+          <h3>What this cannot tell you</h3>
+          <p class="note">
+            Work that was funded and produced no measurable change never enters the population,
+            because a repair is recognised from a fall in its findings. So every number here is
+            conditional on work that reached the platform's view. Closing that gap needs the
+            platform's own notification logs.
+          </p>
+          <p class="note">
+            The underlying records stay closed: organizations remain identifiable from raw
+            configuration content even with their identifiers removed.
+          </p>
+        </div>
+      </details>
+
+    </div>
+  </main>
+
+  <footer>
+    <span>Prospective remediation-impact estimation for black-box scoring systems.</span>
+    <span>Every figure on this page is read from <code>artifact/results/</code>.</span>
+  </footer>
+
+</div>
+
+<script id="cases" type="application/json">{"threshold":0.9953413911686751,"tau":1.0,"target":0.05,"n_illustrative":10,"n_random":5,"n_pool":20,"n_train_orgs":50,"n_cal_orgs":18,"n_test_orgs":23,"pretty":{"http-to-https":"Force HTTPS on plaintext assets","hsts":"Add HSTS","referrer-policy":"Set a strict referrer policy","csp-baseline":"Ship a CSP baseline","xfo-xcto":"Normalize security headers","certificate-rotation":"Rotate weak certificates","tls-legacy":"Drop legacy TLS","weak-ciphers":"Remove weak cipher suites","ssl-vulns":"Remediate SSL vulnerabilities"},"cases":{"ORG-05":{"label":"ORG-05","score":71.99593008002098,"n_opportunities":3,"headroom":{"http-to-https":12.0,"hsts":122.0,"referrer-policy":145.0,"csp-baseline":126.0,"xfo-xcto":166.0,"certificate-rotation":52.0,"tls-legacy":12.0,"weak-ciphers":27.0,"ssl-vulns":112.0},"opportunities":[{"family":"certificate-rotation","label":"Rotate weak certificates","headroom":36.0,"predicted":0.5932692730894841,"risk":0.002242616559084957,"accepted":true,"rules_claim":6.939682539682536,"realized":0.952380952380949,"action_mean":2.6826462585030466,"risk_pct":0.0,"score_before":74.34269394626537,"score_after":75.29507489864632},{"family":"referrer-policy","label":"Set a strict referrer policy","headroom":122.0,"predicted":0.03678078309290504,"risk":0.0014314965177233303,"accepted":true,"rules_claim":2.5907029478457986,"realized":-0.2779788226792874,"action_mean":-0.3374619734747768,"risk_pct":0.0,"score_before":79.01531299388442,"score_after":78.73733417120513},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":90.0,"predicted":0.011698173927576506,"risk":0.0026604189220933755,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":0.0,"score_before":79.11055108912252,"score_after":79.11055108912252}],"selection":"illustrative"},"ORG-10":{"label":"ORG-10","score":71.93212050078247,"n_opportunities":6,"headroom":{"http-to-https":40.0,"hsts":76.0,"referrer-policy":154.0,"csp-baseline":120.0,"xfo-xcto":218.0,"certificate-rotation":28.0,"tls-legacy":22.0,"weak-ciphers":48.0,"ssl-vulns":143.0},"opportunities":[{"family":"certificate-rotation","label":"Rotate weak certificates","headroom":52.0,"predicted":0.7699110964341335,"risk":0.007558241841605461,"accepted":true,"rules_claim":3.84347826086956,"realized":0.0,"action_mean":2.6826462585030466,"risk_pct":1.0,"score_before":69.67302737520129,"score_after":69.67302737520129},{"family":"xfo-xcto","label":"Normalize security headers","headroom":210.0,"predicted":0.26174790117649277,"risk":0.02518104624327843,"accepted":true,"rules_claim":3.831349206349202,"realized":0.0198412698412653,"action_mean":3.4903835726316803,"risk_pct":3.0,"score_before":69.06865079365079,"score_after":69.08849206349205},{"family":"weak-ciphers","label":"Remove weak cipher suites","headroom":53.0,"predicted":0.209174078682063,"risk":0.0018611050133810435,"accepted":true,"rules_claim":2.028169014084511,"realized":0.0,"action_mean":0.38053705608079563,"risk_pct":0.0,"score_before":70.0248435054773,"score_after":70.0248435054773},{"family":"referrer-policy","label":"Set a strict referrer policy","headroom":158.0,"predicted":0.20090644896795043,"risk":0.002302508088374677,"accepted":true,"rules_claim":2.9409722222222143,"realized":0.25,"action_mean":-0.3374619734747768,"risk_pct":0.0,"score_before":70.71199845679013,"score_after":70.96199845679013},{"family":"http-to-https","label":"Force HTTPS on plaintext assets","headroom":40.0,"predicted":0.17639316804721006,"risk":0.003188485215317101,"accepted":true,"rules_claim":5.139906103286378,"realized":0.4859154929577443,"action_mean":0.9047616093596723,"risk_pct":0.0,"score_before":71.93212050078247,"score_after":72.41803599374022},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":152.0,"predicted":-0.0025758338069002346,"risk":0.002016800726600746,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":0.0,"score_before":68.32393689986283,"score_after":68.32393689986283}],"selection":"illustrative"},"ORG-15":{"label":"ORG-15","score":69.79511467316586,"n_opportunities":4,"headroom":{"http-to-https":143.0,"hsts":473.0,"referrer-policy":478.0,"csp-baseline":528.0,"xfo-xcto":608.0,"certificate-rotation":212.0,"tls-legacy":51.0,"weak-ciphers":188.0,"ssl-vulns":414.0},"opportunities":[{"family":"certificate-rotation","label":"Rotate weak certificates","headroom":192.0,"predicted":0.7049692519685713,"risk":0.020195003551799227,"accepted":true,"rules_claim":4.974045801526728,"realized":0.0,"action_mean":2.6826462585030466,"risk_pct":2.0,"score_before":69.73548255179934,"score_after":69.73548255179934},{"family":"weak-ciphers","label":"Remove weak cipher suites","headroom":188.0,"predicted":0.09378407078220473,"risk":0.0032286509755504044,"accepted":true,"rules_claim":1.8897637795275557,"realized":0.0,"action_mean":0.38053705608079563,"risk_pct":0.0,"score_before":69.99983908261467,"score_after":69.99983908261467},{"family":"csp-baseline","label":"Ship a CSP baseline","headroom":528.0,"predicted":0.05055772050602051,"risk":0.01577715276922834,"accepted":true,"rules_claim":1.7883077115360493,"realized":0.0013123359580049,"action_mean":0.011744211003370563,"risk_pct":2.0,"score_before":69.79511467316586,"score_after":69.79642700912386},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":442.0,"predicted":-0.00011439560893209067,"risk":0.00763795447216409,"accepted":true,"rules_claim":1.153488372093037,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":1.0,"score_before":69.72825919773594,"score_after":69.72825919773594}],"selection":"illustrative"},"ORG-07":{"label":"ORG-07","score":81.0718521764534,"n_opportunities":4,"headroom":{"http-to-https":24.0,"hsts":90.0,"referrer-policy":308.0,"csp-baseline":164.0,"xfo-xcto":352.0,"certificate-rotation":84.0,"tls-legacy":10.0,"weak-ciphers":60.0,"ssl-vulns":159.0},"opportunities":[{"family":"xfo-xcto","label":"Normalize security headers","headroom":772.0,"predicted":0.07943882747646312,"risk":0.1870556591957715,"accepted":true,"rules_claim":4.699710012210019,"realized":0.021367521367523,"action_mean":3.4903835726316803,"risk_pct":19.0,"score_before":66.2660816035816,"score_after":66.28744912494912},{"family":"hsts","label":"Add HSTS","headroom":90.0,"predicted":0.038092858625751236,"risk":0.011526652566226628,"accepted":true,"rules_claim":1.3657975460122742,"realized":0.0245398773006115,"action_mean":2.5104594299659353,"risk_pct":1.0,"score_before":81.0718521764534,"score_after":81.09639205375402},{"family":"referrer-policy","label":"Set a strict referrer policy","headroom":336.0,"predicted":0.024715368802564707,"risk":0.02846138370158163,"accepted":true,"rules_claim":2.875,"realized":0.0428571428571444,"action_mean":-0.3374619734747768,"risk_pct":3.0,"score_before":81.78314965986394,"score_after":81.82600680272108},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":445.0,"predicted":-0.0003234797968434452,"risk":0.21132012771825617,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":21.0,"score_before":67.21856761627504,"score_after":67.21856761627504}],"selection":"illustrative"},"ORG-20":{"label":"ORG-20","score":67.89329140461216,"n_opportunities":3,"headroom":{"http-to-https":18.0,"hsts":74.0,"referrer-policy":65.0,"csp-baseline":92.0,"xfo-xcto":118.0,"certificate-rotation":76.0,"tls-legacy":4.0,"weak-ciphers":12.0,"ssl-vulns":15.0},"opportunities":[{"family":"http-to-https","label":"Force HTTPS on plaintext assets","headroom":18.0,"predicted":0.21429088277704558,"risk":0.24166400917665531,"accepted":true,"rules_claim":4.0566037735848965,"realized":0.4989517819706464,"action_mean":0.9047616093596723,"risk_pct":24.0,"score_before":67.89329140461216,"score_after":68.3922431865828},{"family":"hsts","label":"Add HSTS","headroom":45.0,"predicted":0.11141010131976051,"risk":0.048195343473551665,"accepted":true,"rules_claim":1.7089285714285722,"realized":0.2232142857142918,"action_mean":2.5104594299659353,"risk_pct":5.0,"score_before":68.40436507936508,"score_after":68.62757936507937},{"family":"csp-baseline","label":"Ship a CSP baseline","headroom":98.0,"predicted":0.02834090706148599,"risk":0.03489435469698789,"accepted":true,"rules_claim":1.4207899305555571,"realized":0.078125,"action_mean":0.011744211003370563,"risk_pct":3.0,"score_before":72.91319444444444,"score_after":72.99131944444444}],"selection":"illustrative"},"ORG-08":{"label":"ORG-08","score":70.57,"n_opportunities":4,"headroom":{"http-to-https":2.0,"hsts":33.0,"referrer-policy":34.0,"csp-baseline":26.0,"xfo-xcto":46.0,"certificate-rotation":12.0,"tls-legacy":12.0,"weak-ciphers":14.0,"ssl-vulns":53.0},"opportunities":[{"family":"certificate-rotation","label":"Rotate weak certificates","headroom":16.0,"predicted":1.3001673594067316,"risk":0.0994531129345195,"accepted":true,"rules_claim":6.453333333333333,"realized":2.986666666666679,"action_mean":2.6826462585030466,"risk_pct":10.0,"score_before":66.56833333333333,"score_after":69.555},{"family":"hsts","label":"Add HSTS","headroom":33.0,"predicted":1.1408747314239769,"risk":0.001890727870806386,"accepted":true,"rules_claim":5.766666666666666,"realized":2.0,"action_mean":2.5104594299659353,"risk_pct":0.0,"score_before":70.57,"score_after":72.57},{"family":"referrer-policy","label":"Set a strict referrer policy","headroom":38.0,"predicted":0.7266004412904057,"risk":0.0004535002422028145,"accepted":true,"rules_claim":4.333333333333329,"realized":1.0,"action_mean":-0.3374619734747768,"risk_pct":0.0,"score_before":69.68,"score_after":70.68},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":58.0,"predicted":0.3259345709036323,"risk":0.00034700178877094406,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":0.0,"score_before":69.68,"score_after":69.68}],"selection":"illustrative"},"ORG-01":{"label":"ORG-01","score":84.20690550363447,"n_opportunities":3,"headroom":{"http-to-https":15.0,"hsts":90.0,"referrer-policy":127.0,"csp-baseline":186.0,"xfo-xcto":220.0,"certificate-rotation":40.0,"tls-legacy":24.0,"weak-ciphers":64.0,"ssl-vulns":132.0},"opportunities":[{"family":"certificate-rotation","label":"Rotate weak certificates","headroom":44.0,"predicted":0.5659868830781464,"risk":0.004209258303739327,"accepted":true,"rules_claim":4.766355140186917,"realized":0.4186915887850375,"action_mean":2.6826462585030466,"risk_pct":0.0,"score_before":83.78821391484944,"score_after":84.20690550363447},{"family":"csp-baseline","label":"Ship a CSP baseline","headroom":186.0,"predicted":0.01610854438084989,"risk":0.003162295795513264,"accepted":true,"rules_claim":1.2767393561786091,"realized":0.0467289719626222,"action_mean":0.011744211003370563,"risk_pct":0.0,"score_before":84.20690550363447,"score_after":84.2536344755971},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":162.0,"predicted":0.009505490124515828,"risk":0.0021597458668213623,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":0.0,"score_before":82.69590075512404,"score_after":82.69590075512404}],"selection":"illustrative"},"ORG-16":{"label":"ORG-16","score":79.33234126984128,"n_opportunities":4,"headroom":{"http-to-https":34.0,"hsts":129.0,"referrer-policy":147.0,"csp-baseline":162.0,"xfo-xcto":234.0,"certificate-rotation":24.0,"tls-legacy":2.0,"weak-ciphers":52.0,"ssl-vulns":85.0},"opportunities":[{"family":"http-to-https","label":"Force HTTPS on plaintext assets","headroom":34.0,"predicted":0.19332549703188887,"risk":0.020156116020629507,"accepted":true,"rules_claim":4.159126984126971,"realized":0.357142857142847,"action_mean":0.9047616093596723,"risk_pct":2.0,"score_before":79.33234126984128,"score_after":79.68948412698413},{"family":"hsts","label":"Add HSTS","headroom":49.0,"predicted":0.015302734324944677,"risk":0.009977904189899509,"accepted":true,"rules_claim":1.100892857142853,"realized":0.0125000000000028,"action_mean":2.5104594299659353,"risk_pct":1.0,"score_before":81.65119047619048,"score_after":81.66369047619048},{"family":"csp-baseline","label":"Ship a CSP baseline","headroom":154.0,"predicted":0.003752361281456674,"risk":0.002018499773090627,"accepted":true,"rules_claim":1.6331994645247647,"realized":0.001673360107091,"action_mean":0.011744211003370563,"risk_pct":0.0,"score_before":80.76439089692101,"score_after":80.7660642570281},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":96.0,"predicted":-0.003022701884438514,"risk":0.00237895409112378,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":0.0,"score_before":81.63816964285715,"score_after":81.63816964285715}],"selection":"illustrative"},"ORG-14":{"label":"ORG-14","score":81.5625,"n_opportunities":3,"headroom":{"http-to-https":2.0,"hsts":24.0,"referrer-policy":24.0,"csp-baseline":20.0,"xfo-xcto":34.0,"ssl-vulns":3.0},"opportunities":[{"family":"hsts","label":"Add HSTS","headroom":26.0,"predicted":2.8968073377754844,"risk":0.7226528675861943,"accepted":true,"rules_claim":4.791666666666671,"realized":0.1041666666666714,"action_mean":2.5104594299659353,"risk_pct":72.0,"score_before":83.4375,"score_after":83.54166666666667},{"family":"http-to-https","label":"Force HTTPS on plaintext assets","headroom":2.0,"predicted":1.2126608538282215,"risk":0.04695468874387859,"accepted":true,"rules_claim":2.3076923076923066,"realized":3.5447827635327656,"action_mean":0.9047616093596723,"risk_pct":5.0,"score_before":82.53739316239316,"score_after":86.08217592592592},{"family":"xfo-xcto","label":"Normalize security headers","headroom":28.0,"predicted":1.1436086636682026,"risk":0.04686018029905684,"accepted":true,"rules_claim":4.519230769230774,"realized":0.3846153846153868,"action_mean":3.4903835726316803,"risk_pct":5.0,"score_before":84.26816239316238,"score_after":84.65277777777777}],"selection":"illustrative"},"ORG-17":{"label":"ORG-17","score":79.601655982906,"n_opportunities":5,"headroom":{"http-to-https":18.0,"hsts":52.0,"referrer-policy":83.0,"csp-baseline":126.0,"xfo-xcto":140.0,"certificate-rotation":12.0,"tls-legacy":12.0,"weak-ciphers":22.0,"ssl-vulns":66.0},"opportunities":[{"family":"certificate-rotation","label":"Rotate weak certificates","headroom":8.0,"predicted":0.5308261137600759,"risk":0.006458220062031038,"accepted":true,"rules_claim":3.393939393939391,"realized":1.818181818181813,"action_mean":2.6826462585030466,"risk_pct":1.0,"score_before":75.90993265993266,"score_after":77.72811447811448},{"family":"referrer-policy","label":"Set a strict referrer policy","headroom":82.0,"predicted":0.08974552825891825,"risk":0.02192602830858504,"accepted":true,"rules_claim":1.911764705882362,"realized":0.1851851851851904,"action_mean":-0.3374619734747768,"risk_pct":2.0,"score_before":80.06639433551197,"score_after":80.25157952069716},{"family":"csp-baseline","label":"Ship a CSP baseline","headroom":90.0,"predicted":0.0779028563781397,"risk":0.00032627951153684995,"accepted":true,"rules_claim":1.3526670358065616,"realized":-0.1945890242402015,"action_mean":0.011744211003370563,"risk_pct":0.0,"score_before":91.61892764857882,"score_after":91.42433862433862},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":47.0,"predicted":0.004747972197293656,"risk":0.00013563483136190657,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":0.0,"score_before":88.75448232323232,"score_after":88.75448232323232},{"family":"weak-ciphers","label":"Remove weak cipher suites","headroom":12.0,"predicted":0.003970313232068205,"risk":0.0002167357833018103,"accepted":true,"rules_claim":1.6551724137931243,"realized":0.2758620689655231,"action_mean":0.38053705608079563,"risk_pct":0.0,"score_before":78.15134099616857,"score_after":78.4272030651341}],"selection":"illustrative"},"ORG-11":{"label":"ORG-11","score":77.60814814814815,"n_opportunities":2,"headroom":{"http-to-https":11.0,"hsts":82.0,"referrer-policy":98.0,"csp-baseline":210.0,"xfo-xcto":120.0,"certificate-rotation":44.0,"tls-legacy":6.0,"weak-ciphers":54.0,"ssl-vulns":76.0},"opportunities":[{"family":"xfo-xcto","label":"Normalize security headers","headroom":138.0,"predicted":0.035310374684295015,"risk":0.00019947820535442964,"accepted":true,"rules_claim":1.9651442307692408,"realized":0.0261752136752164,"action_mean":3.4903835726316803,"risk_pct":0.0,"score_before":83.69715926434675,"score_after":83.72333447802197},{"family":"csp-baseline","label":"Ship a CSP baseline","headroom":292.0,"predicted":0.0033226036555087423,"risk":0.0003024914293647109,"accepted":true,"rules_claim":0.9045138888889,"realized":0.0033386752136692,"action_mean":0.011744211003370563,"risk_pct":0.0,"score_before":83.70583981990232,"score_after":83.70917849511599}],"selection":"random"},"ORG-18":{"label":"ORG-18","score":62.80111111111111,"n_opportunities":2,"headroom":{"http-to-https":32.0,"hsts":98.0,"referrer-policy":81.0,"csp-baseline":136.0,"xfo-xcto":110.0,"certificate-rotation":52.0,"tls-legacy":14.0,"weak-ciphers":26.0,"ssl-vulns":63.0},"opportunities":[{"family":"certificate-rotation","label":"Rotate weak certificates","headroom":28.0,"predicted":0.5017361002713929,"risk":0.013346179980099643,"accepted":true,"rules_claim":8.849999999999994,"realized":1.4000000000000057,"action_mean":2.6826462585030466,"risk_pct":1.0,"score_before":74.37098214285714,"score_after":75.77098214285715},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":49.0,"predicted":0.06348777983660527,"risk":0.049364865829706214,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":5.0,"score_before":66.40172413793103,"score_after":66.40172413793103}],"selection":"random"},"ORG-12":{"label":"ORG-12","score":77.50384126984127,"n_opportunities":3,"headroom":{"http-to-https":15.0,"hsts":33.0,"referrer-policy":25.0,"csp-baseline":58.0,"xfo-xcto":48.0,"tls-legacy":2.0,"weak-ciphers":10.0,"ssl-vulns":16.0},"opportunities":[{"family":"certificate-rotation","label":"Rotate weak certificates","headroom":4.0,"predicted":1.4748247710267661,"risk":0.11982723332930428,"accepted":true,"rules_claim":2.8888888888888857,"realized":2.8888888888888857,"action_mean":2.6826462585030466,"risk_pct":12.0,"score_before":84.40035273368606,"score_after":87.28924162257495},{"family":"csp-baseline","label":"Ship a CSP baseline","headroom":58.0,"predicted":0.24753329496552895,"risk":0.1495000826844702,"accepted":true,"rules_claim":1.3915873015872933,"realized":0.0166666666666657,"action_mean":0.011744211003370563,"risk_pct":15.0,"score_before":77.50384126984127,"score_after":77.52050793650794},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":17.0,"predicted":0.043789180892854156,"risk":0.010505696788084268,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":1.0,"score_before":77.50384126984127,"score_after":77.50384126984127}],"selection":"random"},"ORG-23":{"label":"ORG-23","score":73.18812056737589,"n_opportunities":2,"headroom":{"http-to-https":26.0,"hsts":31.0,"referrer-policy":70.0,"csp-baseline":100.0,"xfo-xcto":98.0,"certificate-rotation":24.0,"tls-legacy":15.0,"weak-ciphers":30.0,"ssl-vulns":134.0},"opportunities":[{"family":"csp-baseline","label":"Ship a CSP baseline","headroom":100.0,"predicted":0.04233189916853706,"risk":0.0034293367829769496,"accepted":true,"rules_claim":2.0986575481256295,"realized":0.1063829787234027,"action_mean":0.011744211003370563,"risk_pct":0.0,"score_before":73.18812056737589,"score_after":73.29450354609929},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":145.0,"predicted":-0.002330274957731098,"risk":0.00018786180399540231,"accepted":true,"rules_claim":0.0,"realized":0.0,"action_mean":0.030378838189429727,"risk_pct":0.0,"score_before":74.0346111111111,"score_after":74.0346111111111}],"selection":"random"},"ORG-22":{"label":"ORG-22","score":73.4393733250876,"n_opportunities":2,"headroom":{"http-to-https":6.0,"hsts":37.0,"referrer-policy":56.0,"csp-baseline":74.0,"xfo-xcto":92.0,"certificate-rotation":8.0,"tls-legacy":10.0,"weak-ciphers":24.0,"ssl-vulns":63.0},"opportunities":[{"family":"csp-baseline","label":"Ship a CSP baseline","headroom":74.0,"predicted":0.7547120590756048,"risk":0.0014692342177979466,"accepted":true,"rules_claim":2.8064767573696088,"realized":0.0170068027210987,"action_mean":0.011744211003370563,"risk_pct":0.0,"score_before":73.7766749123892,"score_after":73.7936817151103},{"family":"ssl-vulns","label":"Remediate SSL vulnerabilities","headroom":56.0,"predicted":0.007528196818631001,"risk":0.00015287222961435403,"accepted":true,"rules_claim":0.0,"realized":0.158730158730151,"action_mean":0.030378838189429727,"risk_pct":0.0,"score_before":75.90053854875283,"score_after":76.05926870748299}],"selection":"random"}}}</script>
+<script id="agg" type="application/json">{"domains":{"web":{"n_records":96207,"n_orgs":1382,"n_families":9,"mean_gain":0.3399714201628176,"share_small":0.7619611878553536,"single_family_share":0.3797228891868575,"headroom_response":{"http-to-https":{"points":[{"headroom":4.0,"gain":2.1505342329319856,"n":367},{"headroom":15.0,"gain":0.42457863098919846,"n":393},{"headroom":28.0,"gain":0.19759701924690617,"n":363},{"headroom":46.0,"gain":0.1606894804922571,"n":388},{"headroom":88.0,"gain":0.11001221709052585,"n":392},{"headroom":194.0,"gain":-0.002904959243564283,"n":381}],"headroom_max":467.3600000000006,"n":2284,"realized_mean":0.4957087134457551},"hsts":{"points":[{"headroom":10.5,"gain":-0.24233280838604768,"n":336},{"headroom":33.0,"gain":-0.026675166998214588,"n":357},{"headroom":60.0,"gain":-0.10844264788184671,"n":346},{"headroom":105.0,"gain":-0.023110531417337116,"n":357},{"headroom":218.0,"gain":-0.09604454991811358,"n":350},{"headroom":600.0,"gain":-0.12852941538393922,"n":351}],"headroom_max":1349.3599999999988,"n":2097,"realized_mean":-0.10274100686232014},"referrer-policy":{"points":[{"headroom":37.0,"gain":-0.4349468987776434,"n":207},{"headroom":94.0,"gain":0.012738888942626326,"n":206},{"headroom":166.0,"gain":-0.04920335574253446,"n":211},{"headroom":306.0,"gain":-0.07804631756072442,"n":208},{"headroom":565.0,"gain":-0.04843949942990801,"n":208},{"headroom":1329.0,"gain":-0.02763488150218079,"n":209}],"headroom_max":3716.04,"n":1249,"realized_mean":-0.1039843435984574},"csp-baseline":{"points":[{"headroom":48.0,"gain":-0.12110322991158748,"n":1569},{"headroom":92.0,"gain":-0.04840295640337014,"n":1525},{"headroom":136.0,"gain":-0.0758921528073231,"n":1620},{"headroom":212.0,"gain":-0.07629461202662373,"n":1569},{"headroom":390.0,"gain":-0.055709565015872105,"n":1575},{"headroom":1060.0,"gain":-0.057092008245576746,"n":1573}],"headroom_max":2031.199999999997,"n":9431,"realized_mean":-0.07252945646637123},"xfo-xcto":{"points":[{"headroom":40.0,"gain":-0.4051321369615082,"n":366},{"headroom":88.0,"gain":-0.2217693911500854,"n":372},{"headroom":188.0,"gain":-0.3012990716135061,"n":368},{"headroom":342.0,"gain":-0.1900905373436448,"n":364},{"headroom":622.0,"gain":-0.12576016768195653,"n":376},{"headroom":1590.0,"gain":-0.07338386401383304,"n":370}],"headroom_max":2732.0,"n":2216,"realized_mean":-0.21899162559392354},"certificate-rotation":{"points":[{"headroom":4.0,"gain":3.237175463436136,"n":168},{"headroom":12.0,"gain":2.189271883729103,"n":573},{"headroom":28.0,"gain":0.9007186558217442,"n":315},{"headroom":48.0,"gain":0.3875175949182969,"n":431},{"headroom":100.0,"gain":0.3766299803886474,"n":388},{"headroom":272.0,"gain":0.09109368114551793,"n":377}],"headroom_max":480.0,"n":2252,"realized_mean":1.0788274766475743},"tls-legacy":{"points":[{"headroom":2.0,"gain":-0.6498762068227841,"n":25},{"headroom":4.0,"gain":-0.6132827712623415,"n":37},{"headroom":8.0,"gain":-0.8937599102349354,"n":53},{"headroom":34.0,"gain":-0.6291543240648817,"n":40},{"headroom":66.0,"gain":-0.41441032820742113,"n":39},{"headroom":180.0,"gain":-0.342325153974309,"n":39}],"headroom_max":1290.1599999999999,"n":233,"realized_mean":-0.6050922734652814},"weak-ciphers":{"points":[{"headroom":8.0,"gain":-0.252759421476922,"n":173},{"headroom":22.0,"gain":-0.08118465049328182,"n":180},{"headroom":48.0,"gain":-0.03114543523057112,"n":175},{"headroom":90.0,"gain":-0.10173158752939232,"n":179},{"headroom":182.0,"gain":-0.04880031410393928,"n":181},{"headroom":424.0,"gain":-0.055074672034459544,"n":178}],"headroom_max":866.3000000000004,"n":1066,"realized_mean":-0.0944063516063379},"ssl-vulns":{"points":[{"headroom":16.0,"gain":-0.5980873742178056,"n":2530},{"headroom":37.0,"gain":-0.1426829733087141,"n":2654},{"headroom":69.0,"gain":-0.12417945447177103,"n":2635},{"headroom":137.0,"gain":-0.11627088591373137,"n":2642},{"headroom":240.0,"gain":-0.05575397825974091,"n":2615},{"headroom":575.0,"gain":-0.059433574111180006,"n":2628}],"headroom_max":1637.0,"n":15704,"realized_mean":-0.1800961727561751}},"accuracy":{"prospective_model":{"mean":0.47332663162334665,"sd":0.03961401749632975},"predict_zero":{"mean":0.6671839873219305,"sd":0.04839102703045893},"action_mean":{"mean":0.9101171762407185,"sd":0.03364305078918464},"predict_mean":{"mean":0.7853314028081677,"sd":0.04290509840812796}},"paired":{"reduction":0.2130369591788377,"ci":[0.1522418354622332,0.2861371183682266],"significant":true},"reliability_auc":0.822341754361229,"calibration":{"0.05":{"answered":5,"n_splits":5,"coverage_mean":0.33654877812134887,"coverage_min":0.030389572349150556,"coverage_max":0.8455451348182884,"error_mean":0.02568905786464523,"error_min":0.0024096385542168677,"error_max":0.03838821490467938,"exceeded_in":0,"accepted_orgs_mean":68.2,"accepted_records_mean":4799.8},"0.1":{"answered":5,"n_splits":5,"coverage_mean":0.6784947199886886,"coverage_min":0.11069974083672714,"coverage_max":0.96197245017585,"error_mean":0.05505671101187298,"error_min":0.016126601356443105,"error_max":0.0773097722598827,"exceeded_in":0,"accepted_orgs_mean":146.8,"accepted_records_mean":9905.4},"0.2":{"answered":5,"n_splits":5,"coverage_mean":0.999914396667605,"coverage_min":0.9997069167643611,"coverage_max":1.0,"error_mean":0.10952477412033954,"error_min":0.0909556938850238,"error_max":0.13390928725701945,"exceeded_in":0,"accepted_orgs_mean":208.0,"accepted_records_mean":14793.8}},"temporal":{"date_only":{"prospective_model":{"mean":0.3963692050308731,"sd":0.0},"predict_zero":{"mean":0.5920323244205175,"sd":0.0},"action_mean":{"mean":0.873871322500916,"sd":0.0},"predict_mean":{"mean":0.751309104893883,"sd":0.0}},"date_and_org":{"prospective_model":{"mean":0.5082634682583642,"sd":0.0},"predict_zero":{"mean":0.6748641853598394,"sd":0.0},"action_mean":{"mean":0.934288264219587,"sd":0.0},"predict_mean":{"mean":0.8263709267719995,"sd":0.0}}},"decision":{"0.1":{"model":{"mean":0.5743476969249057,"sd":0.06459705474205552},"action_mean":{"mean":0.5238176794204116,"sd":0.030045038464984217},"random":{"mean":-0.04892084325381859,"sd":0.05267958808716258}},"0.25":{"model":{"mean":0.43599147335711025,"sd":0.09262271669756428},"action_mean":{"mean":0.4663100501890919,"sd":0.07172513628699295},"random":{"mean":-0.0738051141326154,"sd":0.058807530185064356}},"0.5":{"model":{"mean":0.31364933123921845,"sd":0.11006972037552769},"action_mean":{"mean":0.30772762251556773,"sd":0.06500638193201891},"random":{"mean":-0.12426220895763396,"sd":0.07786197744559863}},"top_decile_points":{"selected_mean":0.8675740402023356,"population_mean":-0.0384634020040299}},"per_action":{"http-to-https":{"n_mean":575.6,"mae_model":0.7302432407449683,"mae_zero":1.029074293278012,"improvement":0.2903882202529301},"hsts":{"n_mean":518.4,"mae_model":0.5353703765734025,"mae_zero":0.5135972203956556,"improvement":-0.04239344629040964},"referrer-policy":{"n_mean":318.0,"mae_model":0.3255277822612859,"mae_zero":0.33445527813056786,"improvement":0.026692644586690406},"csp-baseline":{"n_mean":2302.0,"mae_model":0.14014061741488051,"mae_zero":0.11359465527251664,"improvement":-0.23369023902294872},"xfo-xcto":{"n_mean":575.2,"mae_model":0.4936386362173105,"mae_zero":0.5045553928139752,"improvement":0.021636388694173725},"certificate-rotation":{"n_mean":507.6,"mae_model":0.6951131513240096,"mae_zero":1.105706620793763,"improvement":0.3713403372541959},"tls-legacy":{"n_mean":53.2,"mae_model":0.6089001026639533,"mae_zero":0.6169755976546165,"improvement":0.013088840176761485},"weak-ciphers":{"n_mean":297.8,"mae_model":0.3394285990658005,"mae_zero":0.334371651795082,"improvement":-0.015123732061525397},"ssl-vulns":{"n_mean":4038.2,"mae_model":0.2888382138485036,"mae_zero":0.2624665843566533,"improvement":-0.1004761408256647}},"risk_curve":{"coverage":[0.05,0.1,0.15000000000000002,0.2,0.25,0.30000000000000004,0.35000000000000003,0.4,0.45,0.5,0.55,0.6000000000000001,0.65,0.7000000000000001,0.75,0.8,0.8500000000000001,0.9,0.9500000000000001,1.0],"error":[0.012880407374738473,0.013465903591671616,0.016666352671664497,0.02052686771674272,0.02194453547096882,0.02291391171797028,0.024117476651584768,0.02572831516207576,0.02682714861243555,0.027981969006229672,0.029579107699294394,0.03160290331051986,0.034749712269444004,0.03825938770644114,0.042103149573351095,0.04818198717223969,0.05591474842066222,0.06631136704173664,0.08340361005761177,0.11160002466168309]}},"mail":{"n_records":1469,"n_orgs":507,"n_families":2,"mean_gain":5.0407270846599435,"share_small":0.2756977535738598,"single_family_share":0.8093941456773315,"headroom_response":{"spf":{"points":[{"headroom":2.0,"gain":14.621734587251828,"n":29},{"headroom":4.0,"gain":16.20534215474407,"n":165},{"headroom":10.0,"gain":4.988310982043195,"n":102},{"headroom":18.0,"gain":2.624995351931638,"n":105},{"headroom":49.0,"gain":1.0423792763218247,"n":104},{"headroom":132.0,"gain":1.3722319703032502,"n":101}],"headroom_max":394.9,"n":606,"realized_mean":6.814103736670628},"dmarc":{"points":[{"headroom":4.0,"gain":8.561229946524065,"n":85},{"headroom":7.0,"gain":4.20096024449957,"n":89},{"headroom":12.0,"gain":3.5150907080920692,"n":116},{"headroom":25.0,"gain":1.5917964052729683,"n":96},{"headroom":61.0,"gain":1.6353035624825434,"n":99},{"headroom":235.0,"gain":1.099804178540866,"n":98}],"headroom_max":1150.16,"n":583,"realized_mean":3.3136000796615246}},"accuracy":{"prospective_model":{"mean":3.2111573117369865,"sd":0.19169676329925583},"predict_zero":{"mean":5.252840306353364,"sd":0.4640917479145531},"action_mean":{"mean":6.074623485389021,"sd":0.22429722931077828},"predict_mean":{"mean":6.065731833261417,"sd":0.12875261319814574}},"paired":{"reduction":1.6558276134797607,"ci":[0.832659696604215,2.9073199088666724],"significant":true},"reliability_auc":0.6968891751840248,"calibration":{"0.05":{"answered":1,"n_splits":5,"coverage_mean":0.020618556701030927,"coverage_min":0.020618556701030927,"coverage_max":0.020618556701030927,"error_mean":0.0,"error_min":0.0,"error_max":0.0,"exceeded_in":0,"accepted_orgs_mean":3.0,"accepted_records_mean":4.0},"0.1":{"answered":1,"n_splits":5,"coverage_mean":0.020618556701030927,"coverage_min":0.020618556701030927,"coverage_max":0.020618556701030927,"error_mean":0.0,"error_min":0.0,"error_max":0.0,"exceeded_in":0,"accepted_orgs_mean":3.0,"accepted_records_mean":4.0},"0.2":{"answered":1,"n_splits":5,"coverage_mean":0.020618556701030927,"coverage_min":0.020618556701030927,"coverage_max":0.020618556701030927,"error_mean":0.0,"error_min":0.0,"error_max":0.0,"exceeded_in":0,"accepted_orgs_mean":3.0,"accepted_records_mean":4.0}},"temporal":{"date_only":{"prospective_model":{"mean":2.3887035406305173,"sd":0.0},"predict_zero":{"mean":4.1861352741393665,"sd":0.0},"action_mean":{"mean":5.380784152645884,"sd":0.0},"predict_mean":{"mean":5.427678504883985,"sd":0.0}},"date_and_org":{"prospective_model":{"mean":2.300571844902497,"sd":0.0},"predict_zero":{"mean":3.2600478661094634,"sd":0.0},"action_mean":{"mean":6.199378717143021,"sd":0.0},"predict_mean":{"mean":5.978113297843427,"sd":0.0}}},"decision":{"0.1":{"model":{"mean":0.867001670706631,"sd":0.027695108344691802},"action_mean":{"mean":0.23009775861322682,"sd":0.059222277955756734},"random":{"mean":0.21568584988411907,"sd":0.05630621978512655}},"0.25":{"model":{"mean":0.8127950722003703,"sd":0.04080582847435976},"action_mean":{"mean":0.38502699239078875,"sd":0.10654672507454961},"random":{"mean":0.2764946396236935,"sd":0.008585751369018476}},"0.5":{"model":{"mean":0.8492858583049461,"sd":0.022071422600359596},"action_mean":{"mean":0.6237719431167995,"sd":0.06724456757877517},"random":{"mean":0.4638418346512291,"sd":0.029249507759021246}},"top_decile_points":{"selected_mean":21.83452201815373,"population_mean":4.716879345643701}},"per_action":{"spf":{"n_mean":139.6,"mae_model":3.408820570670355,"mae_zero":7.125675455726973,"improvement":0.5216143940528959},"dmarc":{"n_mean":151.2,"mae_model":3.5086329555589635,"mae_zero":4.690885256130765,"improvement":0.25203180977975403}},"risk_curve":{"coverage":[0.05,0.1,0.15000000000000002,0.2,0.25,0.30000000000000004,0.35000000000000003,0.4,0.45,0.5,0.55,0.6000000000000001,0.65,0.7000000000000001,0.75,0.8,0.8500000000000001,0.9,0.9500000000000001,1.0],"error":[0.22282963910201764,0.23192127059134732,0.30309280397967225,0.32065582739247234,0.3672094597515751,0.384797399744994,0.4015798634032596,0.40993218023987243,0.4179201190251415,0.42664795300204084,0.448528707221432,0.47289473284845174,0.49658540105959537,0.514510717126677,0.5309572448263772,0.5465793129404094,0.5596471536153615,0.5694107552735269,0.588379002890184,0.6009205952841626]}},"vulnerability":{"n_records":18912,"n_orgs":998,"n_families":4,"mean_gain":0.3859837630481304,"share_small":0.612098138747885,"single_family_share":0.4275592216582064,"headroom_response":{"critical":{"points":[{"headroom":15.0,"gain":0.3805899410886662,"n":39},{"headroom":85.0,"gain":-0.04912484398077789,"n":41},{"headroom":162.5,"gain":-0.08684956380092637,"n":40},{"headroom":410.0,"gain":0.17357064942864472,"n":39},{"headroom":767.5,"gain":-0.11531288864788498,"n":42},{"headroom":3120.0,"gain":-1.3391202549864727,"n":41}],"headroom_max":5945.0,"n":242,"realized_mean":-0.18025995827574529},"high":{"points":[{"headroom":32.0,"gain":1.374458151719671,"n":185},{"headroom":134.0,"gain":-0.10442952202854616,"n":196},{"headroom":408.0,"gain":-0.2257853445722368,"n":187},{"headroom":832.0,"gain":0.42818762457909837,"n":195},{"headroom":1538.0,"gain":0.07155432369221533,"n":184},{"headroom":5266.0,"gain":-0.017485553465775273,"n":198}],"headroom_max":6044.799999999996,"n":1145,"realized_mean":0.24872065945991625},"medium":{"points":[{"headroom":60.0,"gain":0.3547461475267639,"n":1045},{"headroom":150.0,"gain":-0.1164939535461715,"n":1173},{"headroom":339.0,"gain":-0.05777612636451393,"n":1108},{"headroom":663.0,"gain":0.027577623073486518,"n":1116},{"headroom":1398.0,"gain":-0.08489020819013382,"n":1112},{"headroom":4350.0,"gain":0.0098557985024095,"n":1113}],"headroom_max":10621.320000000007,"n":6667,"realized_mean":0.017608307817562858}},"accuracy":{"prospective_model":{"mean":1.3845470480011688,"sd":0.13550925534197153},"predict_zero":{"mean":1.391885682320067,"sd":0.1451911116784263},"action_mean":{"mean":1.5752276292414786,"sd":0.10985781304488375},"predict_mean":{"mean":1.5063223353155402,"sd":0.12253477867093282}},"paired":{"reduction":-0.0063253623243808565,"ci":[-0.039407455294874626,0.018301328540243248],"significant":false},"reliability_auc":0.7021744172341642,"calibration":{"0.05":{"answered":4,"n_splits":5,"coverage_mean":0.06771442255156279,"coverage_min":0.002860775588048315,"coverage_max":0.19680511182108626,"error_mean":0.0363021051529116,"error_min":0.0,"error_max":0.0698051948051948,"exceeded_in":2,"accepted_orgs_mean":19.75,"accepted_records_mean":207.0},"0.1":{"answered":5,"n_splits":5,"coverage_mean":0.1817129671681002,"coverage_min":0.08056537102473499,"coverage_max":0.4383386581469649,"error_mean":0.057945805583455745,"error_min":0.0163265306122449,"error_max":0.1129737609329446,"exceeded_in":1,"accepted_orgs_mean":47.6,"accepted_records_mean":551.4},"0.2":{"answered":5,"n_splits":5,"coverage_mean":0.7055638723736772,"coverage_min":0.3420494699646643,"coverage_max":0.8254805880135695,"error_mean":0.14879598966263952,"error_min":0.08161157024793389,"error_max":0.17990867579908676,"exceeded_in":0,"accepted_orgs_mean":129.6,"accepted_records_mean":2077.4}},"temporal":{"date_only":{"prospective_model":{"mean":1.100912524477205,"sd":0.0},"predict_zero":{"mean":1.1359870724392032,"sd":0.0},"action_mean":{"mean":1.3982783610230198,"sd":0.0},"predict_mean":{"mean":1.2970112640598965,"sd":0.0}},"date_and_org":{"prospective_model":{"mean":0.9270645323412754,"sd":0.0},"predict_zero":{"mean":0.9423501054823771,"sd":0.0},"action_mean":{"mean":1.1999006078189642,"sd":0.0},"predict_mean":{"mean":1.0955864951648784,"sd":0.0}}},"decision":{"0.1":{"model":{"mean":0.20086245509045933,"sd":0.03856342017190709},"action_mean":{"mean":0.02417352260869144,"sd":0.11933421838954997},"random":{"mean":0.04028664723694516,"sd":0.02219797267963934}},"0.25":{"model":{"mean":0.2860533937899253,"sd":0.04783792815232942},"action_mean":{"mean":0.05852647939767747,"sd":0.15417587296142038},"random":{"mean":0.05161262592381545,"sd":0.09183753686511764}},"0.5":{"model":{"mean":0.3083280661021818,"sd":0.05808827655620498},"action_mean":{"mean":0.0011932376707212643,"sd":0.17770882027621646},"random":{"mean":0.07635556431832081,"sd":0.08559799692564442}},"top_decile_points":{"selected_mean":0.6229481869519526,"population_mean":0.04629908101997534}},"per_action":{"critical":{"n_mean":61.6,"mae_model":0.8622700496830371,"mae_zero":0.8314521275672886,"improvement":-0.03706517921352548},"high":{"n_mean":283.2,"mae_model":1.1890166536433269,"mae_zero":1.1676832244097344,"improvement":-0.018269877298594084},"medium":{"n_mean":1706.0,"mae_model":0.6640022746767926,"mae_zero":0.6554210019753068,"improvement":-0.013092764308167748}},"risk_curve":{"coverage":[0.05,0.1,0.15000000000000002,0.2,0.25,0.30000000000000004,0.35000000000000003,0.4,0.45,0.5,0.55,0.6000000000000001,0.65,0.7000000000000001,0.75,0.8,0.8500000000000001,0.9,0.9500000000000001,1.0],"error":[0.05273433441564894,0.06982971584609161,0.08499716723740888,0.09143937215647416,0.0985073442637285,0.10997599500243867,0.11934879084245678,0.12358697230899958,0.12993875081051168,0.13610518466525537,0.14361016450474362,0.15188687016944344,0.1608055791539274,0.17064405044044012,0.18172207492353068,0.19156771803364697,0.20441013105547148,0.21734119435261007,0.23011778197199745,0.2455988782846882]}}},"sources":{},"oracle":{"overall":{"prospective_model":{"mae":0.3555703369596871,"within_1pt":0.9137614678899083,"bias":-0.03038314974046955},"rules_oracle":{"mae":1.469577039726591,"within_1pt":0.46788990825688076,"bias":1.2744345453410642},"action_mean":{"mae":0.6028486238104391,"within_1pt":0.7981651376146789,"bias":-0.11947682579119397},"predict_zero":{"mae":0.5052291889014571,"within_1pt":0.8770642201834863,"bias":-0.4865511194133349}},"per_action":{"certificate-rotation":{"n":31,"true_mean":2.5751273621820245,"rules_mean":7.907268455210929,"rules_mae":5.3321410930289055,"model_mae":1.8565507546773017},"csp-baseline":{"n":138,"true_mean":-0.007184689757877996,"rules_mean":1.7567833037253298,"rules_mae":1.7639679934832075,"model_mae":0.1086089132979911},"http-to-https":{"n":48,"true_mean":3.3351971373323024,"rules_mean":3.07611890452349,"rules_mae":1.8562170139968526,"model_mae":0.7081622641327335},"referrer-policy":{"n":15,"true_mean":0.0364792397239976,"rules_mean":2.42671952411573,"rules_mae":2.3902402843917323,"model_mae":0.3492739894808713},"ssl-vulns":{"n":250,"true_mean":0.05953040880432792,"rules_mean":0.27234380926477775,"rules_mae":0.23208735083421045,"model_mae":0.07817667923966122},"weak-ciphers":{"n":21,"true_mean":0.06643004329738675,"rules_mean":2.3164858017068064,"rules_mae":2.2500557584094194,"model_mae":0.1697545943557625},"xfo-xcto":{"n":32,"true_mean":0.2150696014899651,"rules_mean":4.577778865942136,"rules_mae":4.362709264452171,"model_mae":1.4024910313651746}},"n_test":545,"n_orgs":32},"validity":{"domain":"web","asset_confound":{"n_known":96207,"share_shrank":0.024353737254045965,"share_stable":0.975646262745954},"subset_check":{"all":{"model":0.47332663162334665,"zero":0.6671839873219305},"assets_stable":{"model":0.42558983263604605,"zero":0.6051429322846777,"n":93864}},"threshold_sensitivity":{"0.5":{"n":96207,"model":0.48308767461634533,"zero":0.6768691666718188},"1.0":{"n":96207,"model":0.48308767461634533,"zero":0.6768691666718188},"2.0":{"n":87221,"model":0.5143228358780739,"zero":0.7107647918594013}},"paired_improvement":{"reduction":0.2130369591788377,"ci":[0.1522418354622332,0.2861371183682266],"significant":true},"ablation":{"action only":0.7107984577514501,"headroom only":0.7476479471459995,"action + headroom":0.5446019141548285,"config only":0.7459137029816001,"full":0.5384004539119602}}}</script>
+<script id="rules" type="application/json">{"what":"The rule-based counterfactual against realized outcomes, aggregated per action family. This is Table 6. Aggregated from per-record predictions, which are not released because they carry organization identifiers.","population":"Web records in which exactly one action family was reduced and every other family was unchanged","n_records":1598,"n_action_families":8,"per_action":{"http-to-https":{"n":65,"n_organizations":14,"realized_gain_mean":2.6995447684779217,"rules_gain_mean":3.2812800041051764,"rules_mae":2.151771445855772,"rules_within_1pt":0.06153846153846154},"hsts":{"n":50,"n_organizations":23,"realized_gain_mean":0.993399169035425,"rules_gain_mean":3.0282753466753696,"rules_mae":2.7057852685490342,"rules_within_1pt":0.1},"referrer-policy":{"n":36,"n_organizations":19,"realized_gain_mean":-0.17178366482717503,"rules_gain_mean":2.3296129016541123,"rules_mae":2.5013965664812874,"rules_within_1pt":0.027777777777777776},"csp-baseline":{"n":522,"n_organizations":37,"realized_gain_mean":0.002921586874149251,"rules_gain_mean":1.6472563706358703,"rules_mae":1.6443347837617253,"rules_within_1pt":0.11877394636015326},"xfo-xcto":{"n":92,"n_organizations":23,"realized_gain_mean":1.5580867240422422,"rules_gain_mean":4.448387083619442,"rules_mae":3.053343837838077,"rules_within_1pt":0.1956521739130435},"certificate-rotation":{"n":87,"n_organizations":38,"realized_gain_mean":2.269293051771936,"rules_gain_mean":7.138610759999753,"rules_mae":4.8693177082278165,"rules_within_1pt":0.11494252873563218},"weak-ciphers":{"n":24,"n_organizations":9,"realized_gain_mean":-0.008142356324607183,"rules_gain_mean":2.280050600207215,"rules_mae":2.288192956531822,"rules_within_1pt":0.0},"ssl-vulns":{"n":722,"n_organizations":74,"realized_gain_mean":0.07814492786394668,"rules_gain_mean":0.32811347737947666,"rules_mae":0.25740587202381066,"rules_within_1pt":0.9085872576177285}},"all_actions":{"n":1598,"realized_gain_mean":0.3864073343550609,"rules_gain_mean":1.6460330102740925,"rules_mae":1.3572273999874231,"predict_zero_mae":0.40866114474714604,"rules_within_1pt":0.47309136420525655,"predict_zero_within_1pt":0.909261576971214,"rules_mae_over_predict_zero_mae":3.3211559685401206,"note":"Neither the rule-based counterfactual nor predicting no change contains a learned component, so both are evaluated on all 1,598 records. The ratio 3.3 reported in the abstract, introduction, Section 5.3 and the conclusion is rules_mae / predict_zero_mae."}}</script>
+<script id="rankdata" type="application/json">{"web":{"domain":"web","n_single_family":36532,"n_total":96207,"budgets":{"0.1":{"model":{"mean":0.5743476969249057,"sd":0.06459705474205552},"action_mean":{"mean":0.5238176794204116,"sd":0.030045038464984217},"random":{"mean":-0.04892084325381859,"sd":0.05267958808716258}},"0.25":{"model":{"mean":0.43599147335711025,"sd":0.09262271669756428},"action_mean":{"mean":0.4663100501890919,"sd":0.07172513628699295},"random":{"mean":-0.0738051141326154,"sd":0.058807530185064356}},"0.5":{"model":{"mean":0.31364933123921845,"sd":0.11006972037552769},"action_mean":{"mean":0.30772762251556773,"sd":0.06500638193201891},"random":{"mean":-0.12426220895763396,"sd":0.07786197744559863}},"top_decile_points":{"selected_mean":0.8675740402023356,"population_mean":-0.0384634020040299}}},"mail":{"domain":"mail","n_single_family":1189,"n_total":1469,"budgets":{"0.1":{"model":{"mean":0.867001670706631,"sd":0.027695108344691802},"action_mean":{"mean":0.23009775861322682,"sd":0.059222277955756734},"random":{"mean":0.21568584988411907,"sd":0.05630621978512655}},"0.25":{"model":{"mean":0.8127950722003703,"sd":0.04080582847435976},"action_mean":{"mean":0.38502699239078875,"sd":0.10654672507454961},"random":{"mean":0.2764946396236935,"sd":0.008585751369018476}},"0.5":{"model":{"mean":0.8492858583049461,"sd":0.022071422600359596},"action_mean":{"mean":0.6237719431167995,"sd":0.06724456757877517},"random":{"mean":0.4638418346512291,"sd":0.029249507759021246}},"top_decile_points":{"selected_mean":21.83452201815373,"population_mean":4.716879345643701}}},"vulnerability":{"domain":"vulnerability","n_single_family":8086,"n_total":18912,"budgets":{"0.1":{"model":{"mean":0.20086245509045933,"sd":0.03856342017190709},"action_mean":{"mean":0.02417352260869144,"sd":0.11933421838954997},"random":{"mean":0.04028664723694516,"sd":0.02219797267963934}},"0.25":{"model":{"mean":0.2860533937899253,"sd":0.04783792815232942},"action_mean":{"mean":0.05852647939767747,"sd":0.15417587296142038},"random":{"mean":0.05161262592381545,"sd":0.09183753686511764}},"0.5":{"model":{"mean":0.3083280661021818,"sd":0.05808827655620498},"action_mean":{"mean":0.0011932376707212643,"sd":0.17770882027621646},"random":{"mean":0.07635556431832081,"sd":0.08559799692564442}},"top_decile_points":{"selected_mean":0.6229481869519526,"population_mean":0.04629908101997534}}}}</script>
+
+<script>
+(function(){
+"use strict";
+var C = JSON.parse(document.getElementById('cases').textContent);
+var D = JSON.parse(document.getElementById('agg').textContent);
+var R = JSON.parse(document.getElementById('rules').textContent);
+var K = JSON.parse(document.getElementById('rankdata').textContent);
+var $ = function(id){ return document.getElementById(id); };
+var PRETTY = C.pretty || {};
+
+/* ---------- formatting ---------- */
+/* An exact zero gets no sign. "+0.00" reads as a rounded positive, which it is not. */
+function sgn(v){
+  if (Math.abs(v) < 0.005) return '0.00';
+  return (v > 0 ? '+' : '−') + Math.abs(v).toFixed(2);
+}
+function one(v){ return v.toFixed(1); }
+/* A share of achievable gain. It goes negative when an arbitrary order collects losses,
+   and the minus sign has to survive rounding, so it is written out rather than dropped. */
+function pct(v){
+  var n = Math.round(v * 100);
+  return (n < 0 ? '−' + Math.abs(n) : n) + '%';
+}
+
+/* ---------- theme ---------- */
+(function(){
+  var btn = $('theme'), root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('pof-theme'); } catch(e){}
+  if (saved) root.setAttribute('data-theme', saved);
+  function dark(){
+    var t = root.getAttribute('data-theme');
+    if (t) return t === 'dark';
+    return window.matchMedia('(prefers-color-scheme:dark)').matches;
+  }
+  function paint(){ btn.textContent = dark() ? 'Light' : 'Dark'; }
+  paint();
+  btn.addEventListener('click', function(){
+    var next = dark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('pof-theme', next); } catch(e){}
+    paint();
+  });
+})();
+
+/* ---------- the decision ---------- */
+var keys = Object.keys(C.cases);
+var at = 0, picked = null, shown = false;
+
+function org(){ return C.cases[keys[at]]; }
+
+function render(){
+  var o = org();
+  $('orgName').textContent = o.label;
+  $('orgScore').textContent = one(o.score);
+
+  var list = $('opts');
+  list.textContent = '';
+  o.opportunities.forEach(function(op, i){
+    var li = document.createElement('li');
+    var b  = document.createElement('button');
+    b.type = 'button';
+    b.className = 'opt';
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String(picked === i));
+    b.tabIndex = (picked === i || (picked === null && i === 0)) ? 0 : -1;
+    b.dataset.i = String(i);
+    b.disabled = shown;
+
+    var name = document.createElement('span');
+    name.className = 'opt-name';
+    name.textContent = op.label || PRETTY[op.family] || op.family;
+    b.appendChild(name);
+
+    var open = document.createElement('span');
+    open.className = 'opt-open';
+    open.innerHTML = '<b>' + op.headroom.toFixed(0) + '</b> findings open';
+    b.appendChild(open);
+
+    if (shown) {
+      var figs = document.createElement('span');
+      figs.className = 'opt-figs';
+      figs.style.animationDelay = (i * 55) + 'ms';
+      [['rules','The rules promised', op.rules_claim],
+       ['ours','We estimated', op.predicted],
+       ['got','Actually collected', op.realized]].forEach(function(f){
+        var d = document.createElement('span');
+        d.className = 'fig fig-' + f[0];
+        var k = document.createElement('span'); k.className = 'fig-k'; k.textContent = f[1];
+        var v = document.createElement('span'); v.className = 'fig-v num'; v.textContent = sgn(f[2]);
+        d.appendChild(k); d.appendChild(v);
+        figs.appendChild(d);
+      });
+      b.appendChild(figs);
+    }
+
+    b.addEventListener('click', function(){ choose(i); });
+    li.appendChild(b);
+    list.appendChild(li);
+  });
+
+  /* Once revealed, the reveal button has no job left. Rather than leave a dead disabled
+     control on screen, it becomes the next action. */
+  var go = $('reveal');
+  go.disabled = !shown && picked === null;
+  go.textContent = shown ? 'Try another organization' : 'Reveal what happened';
+  $('actNote').textContent = shown
+    ? 'One case proves nothing. The panels below carry all 1,598.'
+    : (picked === null ? 'Pick one to continue.' : 'You are deciding without knowing. So is the operator.');
+  $('hint').hidden = shown;
+}
+
+function choose(i){
+  if (shown) return;
+  picked = i;
+  render();
+  var btns = $('opts').querySelectorAll('.opt');
+  if (btns[i]) btns[i].focus();
+  var op = org().opportunities[i];
+  $('live').textContent = 'Selected ' + (op.label || op.family) + '. Press reveal to continue.';
+}
+
+/* roving focus across the radio group */
+$('opts').addEventListener('keydown', function(e){
+  var ks = ['ArrowDown','ArrowRight','ArrowUp','ArrowLeft','Home','End'];
+  if (ks.indexOf(e.key) < 0) return;
+  var btns = Array.prototype.slice.call(this.querySelectorAll('.opt'));
+  if (!btns.length || shown) return;
+  var cur = btns.indexOf(document.activeElement);
+  if (cur < 0) cur = 0;
+  var next = cur;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (cur + 1) % btns.length;
+  if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  next = (cur - 1 + btns.length) % btns.length;
+  if (e.key === 'Home') next = 0;
+  if (e.key === 'End')  next = btns.length - 1;
+  e.preventDefault();
+  choose(next);
+});
+
+function verdict(){
+  var o = org(), ops = o.opportunities, mine = ops[picked];
+  var best = ops.reduce(function(a, b){ return b.realized > a.realized ? b : a; }, ops[0]);
+  var name = function(x){ return x.label || PRETTY[x.family] || x.family; };
+
+  var v = $('verdict');
+  v.textContent = '';
+
+  var lede = document.createElement('p');
+  lede.className = 'lede';
+  lede.innerHTML =
+    'The rules promised <span class="num v-rules">' + sgn(mine.rules_claim) + '</span> for ' +
+    'the work you funded. It returned <span class="num v-got">' + sgn(mine.realized) + '</span>.';
+  v.appendChild(lede);
+
+  var p2 = document.createElement('p');
+  p2.innerHTML =
+    'Our estimate, made before the work and without ever querying the scoring engine, said ' +
+    '<span class="num v-ours">' + sgn(mine.predicted) + '</span>.';
+  v.appendChild(p2);
+
+  var p3 = document.createElement('p');
+  if (best === mine) {
+    p3.textContent = 'You picked the best of the ' + ops.length + '. Ranking these correctly is the ' +
+                     'part an operator can act on, and it is what the estimate is for.';
+  } else {
+    p3.innerHTML = 'The best available was <strong>' + name(best) + '</strong> at ' +
+                   '<span class="num v-got">' + sgn(best.realized) + '</span>. ' +
+                   'Our estimate ranked it ' +
+                   (best.predicted >= mine.predicted ? 'above' : 'below') + ' the one you funded.';
+  }
+  v.appendChild(p3);
+
+  v.hidden = false;
+  $('live').textContent = 'Revealed. The rules promised ' + sgn(mine.rules_claim) +
+                          ', the organization collected ' + sgn(mine.realized) + '.';
+}
+
+function next(){
+  at = (at + 1) % keys.length;
+  picked = null; shown = false;
+  $('verdict').hidden = true;
+  render();
+  var first = $('opts').querySelector('.opt');
+  if (first) first.focus();
+  $('live').textContent = 'Now showing ' + org().label + ', ' +
+                          org().opportunities.length + ' repairs open.';
+}
+
+$('reveal').addEventListener('click', function(){
+  if (shown) { next(); return; }
+  if (picked === null) return;
+  shown = true;
+  render();
+  verdict();
+});
+
+$('another').addEventListener('click', next);
+
+render();
+
+/* ---------- evidence: promised against collected ---------- */
+(function(){
+  var rows = Object.keys(R.per_action).map(function(k){
+    var a = R.per_action[k];
+    return { name: PRETTY[k] || k, n: a.n,
+             rules: a.rules_gain_mean, got: a.realized_gain_mean };
+  }).sort(function(a, b){ return b.rules - a.rules; });
+
+  var lo = Math.min(0, Math.min.apply(null, rows.map(function(r){ return r.got; })));
+  var hi = Math.max.apply(null, rows.map(function(r){ return r.rules; }));
+  var pad = (hi - lo) * 0.06;
+  var x = function(v){ return ((v - lo + pad) / (hi - lo + pad * 2)) * 100; };
+
+  var host = $('chart');
+  var head = document.createElement('div');
+  head.className = 'ch-head';
+  head.innerHTML = '<span>Repair</span><span class="ch-track"></span>' +
+                   '<span class="r">Promised</span><span class="r">Got</span>';
+  host.appendChild(head);
+
+  rows.forEach(function(r){
+    var el = document.createElement('div');
+    el.className = 'ch-row';
+
+    var n = document.createElement('span');
+    n.className = 'ch-name';
+    n.textContent = r.name;
+    el.appendChild(n);
+
+    var t = document.createElement('span');
+    t.className = 'ch-track';
+    var a = x(Math.min(r.got, r.rules)), b = x(Math.max(r.got, r.rules));
+    t.innerHTML =
+      '<i class="ch-bar" style="left:' + a + '%;width:' + (b - a) + '%"></i>' +
+      '<i class="ch-dot got"   style="left:' + x(r.got)   + '%"></i>' +
+      '<i class="ch-dot rules" style="left:' + x(r.rules) + '%"></i>';
+    el.appendChild(t);
+
+    var vr = document.createElement('span');
+    vr.className = 'ch-v rules num'; vr.textContent = sgn(r.rules);
+    el.appendChild(vr);
+
+    var vg = document.createElement('span');
+    vg.className = 'ch-v got num'; vg.textContent = sgn(r.got);
+    el.appendChild(vg);
+
+    host.appendChild(el);
+  });
+})();
+
+/* ---------- evidence: accuracy table ---------- */
+(function(){
+  var NAME = { web:'Web', mail:'Mail', vulnerability:'Vulnerability' };
+  var label = 'Mean absolute error in score points, on organizations held out from ' +
+              'training, averaged over five splits. Lower is better.';
+
+  /* The caption lives outside the scroll box. Inside it, it inherits the table's
+     min-width and its text gets clipped instead of wrapping. */
+  var cap = document.createElement('p');
+  cap.className = 'note';
+  cap.id = 'accCap';
+  cap.textContent = label;
+  $('acc').appendChild(cap);
+
+  var t = document.createElement('table');
+  t.setAttribute('aria-describedby', 'accCap');
+  t.innerHTML =
+    /* Improvement sits next to the two numbers it is derived from, which is also what
+       keeps it on screen when the table scrolls on a narrow canvas. */
+    '<thead><tr><th>Domain</th><th>Ours</th><th>No change</th>' +
+    '<th>Improvement</th><th>Repair average</th></tr></thead>';
+  var body = document.createElement('tbody');
+
+  Object.keys(NAME).forEach(function(k){
+    var a = D.domains[k].accuracy;
+    var ours = a.prospective_model.mean, zero = a.predict_zero.mean, am = a.action_mean.mean;
+    var gain = (zero - ours) / zero;
+    var tie  = k === 'vulnerability';
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + NAME[k] + '</td>' +
+      '<td class="num">' + ours.toFixed(3) + '</td>' +
+      '<td class="num">' + zero.toFixed(3) + '</td>' +
+      '<td class="num ' + (tie ? 'tie' : 'win') + '">' +
+        (tie ? 'ties' : Math.round(gain * 100) + '%') + '</td>' +
+      '<td class="num">' + am.toFixed(3) + '</td>';
+    body.appendChild(tr);
+  });
+
+  t.appendChild(body);
+  var box = document.createElement('div');
+  box.className = 'scroll-x';
+  box.setAttribute('tabindex', '0');           /* a scroll region needs to be reachable */
+  box.setAttribute('role', 'region');
+  box.setAttribute('aria-label', 'Accuracy by domain');
+  box.appendChild(t);
+  $('acc').appendChild(box);
+
+  var v = D.domains.vulnerability.accuracy;
+  var wr = K.web.budgets['0.25'];
+  $('concede').textContent =
+    'On software vulnerabilities the estimate ties assuming no change, at ' +
+    v.prospective_model.mean.toFixed(3) + ' against ' + v.predict_zero.mean.toFixed(3) +
+    ', and we claim no improvement there. On Web our ranking only matches the repair ' +
+    'average, and at a quarter of the budget the repair average leads, ' +
+    pct(wr.action_mean.mean) + ' against our ' + pct(wr.model.mean) +
+    '. The acceptance rule is also usable on Web only: ' +
+    'on Mail it declines to answer at every setting, and on Vulnerability it misses its ' +
+    'target on some splits at the two stricter settings.';
+})();
+
+/* ---------- evidence: ranking under a budget ----------
+   Accuracy and ordering are different properties and the paper reports both, because a
+   reference can be accurate and still supply no order at all. Predicting no change is the
+   example: it ties the estimator on Vulnerability and gives every candidate the same value,
+   so it cannot appear here. The comparison is the two orderings an operator can actually
+   produce today, the average past gain of each repair and an arbitrary order. */
+(function(){
+  var NAME = { web:'Web', mail:'Mail', vulnerability:'Vulnerability' };
+  var B = '0.1';
+
+  var cap = document.createElement('p');
+  cap.className = 'note';
+  cap.id = 'rankCap';
+  cap.textContent =
+    'Share of the achievable gain collected when the budget buys the top tenth of the ' +
+    'ranking, on held-out single-repair records, averaged over five splits. Achievable ' +
+    'means what a ranking with perfect foresight would have collected. Higher is better.';
+  $('rank').appendChild(cap);
+
+  var t = document.createElement('table');
+  t.setAttribute('aria-describedby', 'rankCap');
+  t.innerHTML =
+    '<thead><tr><th>Domain</th><th>Ours</th><th>Repair average</th>' +
+    '<th>Arbitrary order</th></tr></thead>';
+  var body = document.createElement('tbody');
+
+  Object.keys(NAME).forEach(function(k){
+    var b = K[k].budgets[B];
+    var ties = k === 'web';                 /* Web only matches the repair average */
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + NAME[k] + '</td>' +
+      '<td class="num ' + (ties ? 'tie' : 'win') + '">' + pct(b.model.mean) + '</td>' +
+      '<td class="num">' + pct(b.action_mean.mean) + '</td>' +
+      '<td class="num">' + pct(b.random.mean) + '</td>';
+    body.appendChild(tr);
+  });
+
+  t.appendChild(body);
+  var box = document.createElement('div');
+  box.className = 'scroll-x';
+  box.setAttribute('tabindex', '0');
+  box.setAttribute('role', 'region');
+  box.setAttribute('aria-label', 'Ranking value by domain');
+  box.appendChild(t);
+  $('rank').appendChild(box);
+})();
+
+/* ---------- verify ---------- */
+(function(){
+  var w = D.domains.web, val = D.validity;
+  var rows = [
+    ['Remediation events observed', (w.n_records + D.domains.mail.n_records +
+      D.domains.vulnerability.n_records).toLocaleString() + ' across three domains'],
+    ['Organizations in the largest domain', w.n_orgs.toLocaleString()],
+    ['How records are split', 'by organization, never by row, so no organization appears on both sides'],
+    ['Organizations behind this page', C.n_train_orgs + ' train, ' + C.n_cal_orgs +
+      ' calibrate, ' + C.n_test_orgs + ' held out'],
+    ['The cases above', C.n_illustrative + ' chosen to show the contrast, ' + C.n_random +
+      ' drawn at random, all from the held-out organizations'],
+    ['A fall explained by assets leaving scope', (val.asset_confound.share_shrank * 100).toFixed(1) +
+      '% of events; removing them leaves the result intact'],
+    ['Scoring engine queried', 'never, by any estimate on this page'],
+    ['Every number traces to', 'artifact/results/']
+  ];
+  var host = $('verify');
+  rows.forEach(function(r){
+    var d = document.createElement('div');
+    d.className = 'kv';
+    d.innerHTML = '<span>' + r[0] + '</span><span>' + r[1] + '</span>';
+    host.appendChild(d);
+  });
+})();
+
+})();
+</script>
+
+</body>
+</html>

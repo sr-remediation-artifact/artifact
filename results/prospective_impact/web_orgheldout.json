@@ -1,0 +1,79 @@
+{
+  "domain": "web",
+  "split": "orgheldout",
+  "objective": "l1",
+  "n": 96207,
+  "n_orgs": 1382,
+  "mean_gain": 0.3399714201628176,
+  "share_small": 0.7619611878553536,
+  "results": {
+    "prospective_model": {
+      "mean": 0.47332663162334665,
+      "sd": 0.03961401749632975
+    },
+    "predict_zero": {
+      "mean": 0.6671839873219305,
+      "sd": 0.04839102703045893
+    },
+    "action_mean": {
+      "mean": 0.9101171762407185,
+      "sd": 0.03364305078918464
+    },
+    "predict_mean": {
+      "mean": 0.7853314028081677,
+      "sd": 0.04290509840812796
+    }
+  },
+  "reliability_auc_mean": 0.822341754361229,
+  "reliability_auc_sd": 0.05466057528988084,
+  "risk_calibration": {
+    "0.05": {
+      "answered": 5,
+      "n_splits": 5,
+      "coverage_mean": 0.33654877812134887,
+      "coverage_min": 0.030389572349150556,
+      "coverage_max": 0.8455451348182884,
+      "error_mean": 0.02568905786464523,
+      "error_min": 0.0024096385542168677,
+      "error_max": 0.03838821490467938,
+      "exceeded_in": 0,
+      "accepted_orgs_mean": 68.2,
+      "accepted_records_mean": 4799.8
+    },
+    "0.1": {
+      "answered": 5,
+      "n_splits": 5,
+      "coverage_mean": 0.6784947199886886,
+      "coverage_min": 0.11069974083672714,
+      "coverage_max": 0.96197245017585,
+      "error_mean": 0.05505671101187298,
+      "error_min": 0.016126601356443105,
+      "error_max": 0.0773097722598827,
+      "exceeded_in": 0,
+      "accepted_orgs_mean": 146.8,
+      "accepted_records_mean": 9905.4
+    },
+    "0.2": {
+      "answered": 5,
+      "n_splits": 5,
+      "coverage_mean": 0.999914396667605,
+      "coverage_min": 0.9997069167643611,
+      "coverage_max": 1.0,
+      "error_mean": 0.10952477412033954,
+      "error_min": 0.0909556938850238,
+      "error_max": 0.13390928725701945,
+      "exceeded_in": 0,
+      "accepted_orgs_mean": 208.0,
+      "accepted_records_mean": 14793.8
+    }
+  },
+  "paired_improvement": {
+    "reduction": 0.2130369591788377,
+    "ci": [
+      0.1522418354622332,
+      0.2861371183682266
+    ],
+    "significant": true
+  },
+  "beats_all_references": true
+}
